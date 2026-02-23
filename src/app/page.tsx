@@ -1,65 +1,186 @@
-import Image from "next/image";
+import { searchEvents, EventSummary } from "@/lib/api";
+import Link from "next/link";
 
-export default function Home() {
+function EventTypeBadge({ type }: { type: string }) {
+  const cls: Record<string, string> = {
+    concert: "badge-concert",
+    sports: "badge-sports",
+    theater: "badge-theater",
+    comedy: "badge-comedy",
+    festival: "badge-festival",
+  };
+  return <span className={`badge ${cls[type?.toLowerCase()] || "badge-concert"}`}>{type || "event"}</span>;
+}
+
+function formatDate(dateStr: string) {
+  try {
+    return new Date(dateStr).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+  } catch { return dateStr; }
+}
+
+function formatTime(dateStr: string) {
+  try {
+    return new Date(dateStr).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  } catch { return ""; }
+}
+
+function EventCard({ event, index, popular }: { event: EventSummary; index: number; popular?: boolean }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <Link href={`/events/${event.id}`}>
+      <div className="event-card fade-up group cursor-pointer overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-card)]" style={{ animationDelay: `${index * 60}ms` }}>
+        <div className="relative aspect-[16/9] overflow-hidden bg-[var(--bg-secondary)]">
+          {event.thumbnail_url ? (
+            <img src={event.thumbnail_url} alt={event.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--border)]">
+                <span className="text-2xl font-bold text-[var(--text-muted)]">{event.name?.charAt(0) || "?"}</span>
+              </div>
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-card)] via-transparent to-transparent opacity-60" />
+          <div className="absolute left-3 top-3"><EventTypeBadge type={event.event_type} /></div>
+          {popular && (
+            <div className="absolute right-3 top-3 rounded-md bg-[var(--bg-card)] px-2 py-1 shadow-lg">
+              <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--amber)]">🔥 Popular</span>
+            </div>
+          )}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="p-5">
+          <h3 className="mb-2 text-[0.95rem] font-semibold leading-tight text-[var(--text-primary)] group-hover:text-[var(--accent-hover)] transition-colors">
+            {event.name}
+          </h3>
+          <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+            <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>{formatDate(event.start_time)}</span>
+            <span className="text-[var(--text-muted)]">·</span>
+            <span>{formatTime(event.start_time)}</span>
+          </div>
         </div>
-      </main>
+      </div>
+    </Link>
+  );
+}
+
+function HeroBanner() {
+  return (
+    <div className="relative overflow-hidden border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+      <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)]/8 via-transparent to-purple-900/5" />
+      <div className="absolute -right-40 -top-40 h-96 w-96 rounded-full bg-[var(--accent)]/5 blur-3xl" />
+      <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-purple-800/5 blur-3xl" />
+      <div className="relative mx-auto max-w-7xl px-6 py-20">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: '3rem', alignItems: 'center' }}>
+          <div>
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--accent)]/20 bg-[var(--accent)]/5 px-4 py-1.5">
+              <div className="h-1.5 w-1.5 rounded-full bg-[var(--green)] animate-pulse" />
+              <span className="text-xs font-medium text-[var(--accent-hover)]">Zero buyer fees — always</span>
+            </div>
+            <h1 className="mb-4 text-4xl font-bold tracking-tight text-[var(--text-primary)] md:text-5xl">
+              Tickets for humans<br />
+              <span className="text-[var(--text-muted)]">and their agents</span>
+            </h1>
+            <p className="max-w-lg text-lg text-[var(--text-secondary)]">
+              A secondary ticket marketplace with transparent pricing, no hidden fees, and a first-class API. Browse yourself or let your AI agent find the best deal.
+            </p>
+          </div>
+
+          {/* How it works */}
+          <div className="flex flex-col gap-3">
+            <h2 style={{ transform: 'skewX(-8deg)' }} className="text-sm font-semibold uppercase tracking-widest text-[var(--text-primary)] mb-2">How it works</h2>
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--green)]/10">
+                  <svg className="h-4 w-4 text-[var(--green)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                </div>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">Buy Now</span>
+              </div>
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed">Pay the buy-it-now price and get your tickets instantly. Zero fees added.</p>
+            </div>
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)]/10">
+                  <svg className="h-4 w-4 text-[var(--accent-hover)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                </div>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">Place a Bid</span>
+              </div>
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed">Name your price before the auction ends. Set a max auto-bid and the system competes for you.</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
     </div>
+  );
+}
+
+export default async function Home({ searchParams }: { searchParams: Promise<{ q?: string; type?: string }> }) {
+  const params = await searchParams;
+  const query = params.q || "";
+  const eventType = params.type || "";
+
+  let events: EventSummary[] = [];
+  let error = "";
+
+  try {
+    events = await searchEvents(query || undefined, eventType || undefined, 20);
+  } catch (e) {
+    error = "Failed to load events. Please try again.";
+    console.error(e);
+  }
+
+  return (
+    <>
+      <HeroBanner />
+      <div className="mx-auto max-w-7xl px-6 py-12">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-[var(--text-primary)]">
+              {query ? `Results for "${query}"` : "All Events"}
+            </h2>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">{events.length} event{events.length !== 1 ? "s" : ""} found</p>
+          </div>
+          <div className="hidden items-center gap-2 md:flex">
+            {["All", "Concert", "Sports", "Theater", "Comedy", "Festival"].map((t) => {
+              const val = t === "All" ? "" : t.toLowerCase();
+              const active = eventType === val;
+              return (
+                <Link key={t} href={`/?${new URLSearchParams({ ...(query ? { q: query } : {}), ...(val ? { type: val } : {}) }).toString()}`}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${active ? "bg-[var(--accent)] text-white" : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--border-hover)] hover:text-[var(--text-primary)]"}`}>
+                  {t}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {error && (
+          <div className="rounded-xl border border-[var(--red)]/20 bg-[var(--red)]/5 p-6 text-center">
+            <p className="text-sm text-[var(--red)]">{error}</p>
+          </div>
+        )}
+
+        {!error && events.length === 0 && (
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-16 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--bg-secondary)]">
+              <svg className="h-8 w-8 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <h3 className="mb-1 text-base font-medium text-[var(--text-primary)]">No events found</h3>
+            <p className="text-sm text-[var(--text-muted)]">Try a different search term or browse all events.</p>
+          </div>
+        )}
+
+        {events.length > 0 && (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {events.map((event, i) => (
+              <EventCard key={event.id} event={event} index={i} popular={i === 0 || i === 2 || i === 4} />
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   );
 }

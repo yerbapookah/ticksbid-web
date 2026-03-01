@@ -143,7 +143,7 @@ export default function TicketList({
               section={ticket.seat_section}
               row={ticket.seat_row}
               seat={ticket.seat_number}
-              ticketType={ticket.ticket_type}
+              ticketType={ticket.ticket_type ?? undefined}
               eventName={eventName}
               auctionId={ticket.auction?.auction_item_id || ticket.id}
               buyItNowPrice={ticket.auction?.buy_it_now_price}

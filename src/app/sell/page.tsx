@@ -1,4 +1,4 @@
-import Link from "next/link";
+import SellerPanel from "@/components/SellerPanel";
 
 const FEE_TIERS = [
   { range: "1–5 sales / mo", fee: "8%", highlight: false },
@@ -83,40 +83,7 @@ export default function SellPage() {
 
         {/* Right: CTA panel */}
         <div className="fade-up" style={{ animationDelay: "100ms" }}>
-          <div className="sticky top-24 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
-            <h2 className="mb-1 text-lg font-semibold text-[var(--text-primary)]">
-              Start Selling
-            </h2>
-            <p className="mb-6 text-xs text-[var(--text-muted)]">
-              Sign in to list tickets. Or use the API to list programmatically.
-            </p>
-
-            <button className="mb-3 w-full rounded-lg bg-[var(--accent)] py-3 text-sm font-medium text-white transition-all hover:bg-[var(--accent-hover)]">
-              Sign In to List Tickets
-            </button>
-
-            <Link
-              href="/"
-              className="block w-full rounded-lg border border-[var(--border)] py-3 text-center text-sm font-medium text-[var(--text-secondary)] transition-all hover:border-[var(--border-hover)] hover:text-[var(--text-primary)]"
-            >
-              Browse Events
-            </Link>
-
-            <div className="mt-6 rounded-lg bg-[var(--bg-secondary)] p-4">
-              <div className="mb-2 flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-[var(--green)] animate-pulse" />
-                <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-                  Agent API
-                </span>
-              </div>
-              <code className="text-xs text-[var(--text-muted)]">
-                POST /tickets/
-              </code>
-              <p className="mt-2 text-xs text-[var(--text-muted)]">
-                List tickets programmatically with a delegated agent token.
-              </p>
-            </div>
-          </div>
+          <SellerPanel />
         </div>
       </div>
     </div>

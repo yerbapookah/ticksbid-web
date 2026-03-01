@@ -1,4 +1,5 @@
 import { searchEvents, EventSummary } from "@/lib/api";
+import { getTicketCountsByEvent } from "@/lib/db";
 import Link from "next/link";
 
 function EventTypeBadge({ type }: { type: string }) {
@@ -24,7 +25,7 @@ function formatTime(dateStr: string) {
   } catch { return ""; }
 }
 
-function EventCard({ event, index, popular }: { event: EventSummary; index: number; popular?: boolean }) {
+function EventCard({ event, index, popular, ticketCount }: { event: EventSummary; index: number; popular?: boolean; ticketCount?: number }) {
   return (
     <Link href={`/events/${event.id}`}>
       <div className="event-card fade-up group cursor-pointer overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-card)]" style={{ animationDelay: `${index * 60}ms` }}>
@@ -50,6 +51,14 @@ function EventCard({ event, index, popular }: { event: EventSummary; index: numb
           <h3 className="mb-2 text-[0.95rem] font-semibold leading-tight text-[var(--text-primary)] group-hover:text-[var(--accent-hover)] transition-colors">
             {event.name}
           </h3>
+          {ticketCount != null && ticketCount > 0 && (
+            <div className="mb-2 flex items-center gap-1.5">
+              <svg className="h-3.5 w-3.5 text-[var(--green)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+              </svg>
+              <span className="text-xs font-medium text-[var(--green)]">{ticketCount} ticket{ticketCount !== 1 ? "s" : ""} for sale</span>
+            </div>
+          )}
           <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
             <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -84,20 +93,17 @@ function HeroBanner() {
             <p className="max-w-lg text-lg text-[var(--text-secondary)]">
               A secondary ticket marketplace with transparent pricing, no hidden fees, and a first-class API. Browse yourself or let your AI agent find the best deal.
             </p>
+            <div className="mt-6">
+              <a href="/login?signup=true" className="inline-flex items-center gap-2 rounded-xl bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-[var(--accent-hover)]">
+                Get Started
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </a>
+            </div>
           </div>
 
           {/* How it works */}
           <div className="flex flex-col gap-3">
             <h2 style={{ transform: 'skewX(-8deg)' }} className="text-sm font-semibold uppercase tracking-widest text-[var(--text-primary)] mb-2">How it works</h2>
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-4">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--green)]/10">
-                  <svg className="h-4 w-4 text-[var(--green)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                </div>
-                <span className="text-sm font-semibold text-[var(--text-primary)]">Buy Now</span>
-              </div>
-              <p className="text-xs text-[var(--text-muted)] leading-relaxed">Pay the buy-it-now price and get your tickets instantly. Zero fees added.</p>
-            </div>
             <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-4">
               <div className="flex items-center gap-3 mb-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)]/10">
@@ -106,6 +112,15 @@ function HeroBanner() {
                 <span className="text-sm font-semibold text-[var(--text-primary)]">Place a Bid</span>
               </div>
               <p className="text-xs text-[var(--text-muted)] leading-relaxed">Name your price before the auction ends. Set a max auto-bid and the system competes for you.</p>
+            </div>
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--green)]/10">
+                  <svg className="h-4 w-4 text-[var(--green)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                </div>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">Buy Now</span>
+              </div>
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed">Pay the buy-it-now price and get your tickets instantly. Zero fees added.</p>
             </div>
 
           </div>
@@ -121,6 +136,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
   const eventType = params.type || "";
 
   let events: EventSummary[] = [];
+  let ticketCounts: Record<string, number> = {};
   let error = "";
 
   try {
@@ -128,6 +144,12 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
   } catch (e) {
     error = "Failed to load events. Please try again.";
     console.error(e);
+  }
+
+  try {
+    ticketCounts = await getTicketCountsByEvent();
+  } catch (e) {
+    console.error("Failed to fetch ticket counts:", e);
   }
 
   return (
@@ -176,7 +198,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
         {events.length > 0 && (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {events.map((event, i) => (
-              <EventCard key={event.id} event={event} index={i} popular={i === 0 || i === 2 || i === 4} />
+              <EventCard key={event.id} event={event} index={i} popular={i === 0 || i === 2 || i === 4} ticketCount={ticketCounts[event.id]} />
             ))}
           </div>
         )}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 
 // Create a Stripe Connect Express account for a seller and return the onboarding link
 export async function POST(req: NextRequest) {
@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     const { email, username } = await req.json();
 
     // Create Connected Express account
-    const account = await stripe.accounts.create({
+    const account = await getStripe().accounts.create({
       type: "express",
       ...(email ? { email } : {}),
       metadata: { username: username || "" },
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Generate onboarding link
-    const accountLink = await stripe.accountLinks.create({
+    const accountLink = await getStripe().accountLinks.create({
       account: account.id,
       refresh_url: `${req.nextUrl.origin}/sell?stripe_refresh=true`,
       return_url: `${req.nextUrl.origin}/sell?stripe_connected=true&account_id=${account.id}`,

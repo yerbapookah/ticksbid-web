@@ -103,7 +103,7 @@ function HeroBanner() {
 
           {/* How it works */}
           <div className="flex flex-col gap-3">
-            <h2 style={{ transform: 'skewX(-8deg)' }} className="text-sm font-semibold uppercase tracking-widest text-[var(--text-primary)] mb-2">How it works</h2>
+            <h2 style={{ transform: 'skewX(-8deg)' }} className="text-sm font-semibold uppercase tracking-widest text-[var(--text-primary)] mb-2">Three ways to buy</h2>
             <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-4">
               <div className="flex items-center gap-3 mb-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)]/10">
@@ -121,6 +121,15 @@ function HeroBanner() {
                 <span className="text-sm font-semibold text-[var(--text-primary)]">Buy Now</span>
               </div>
               <p className="text-xs text-[var(--text-muted)] leading-relaxed">Pay the buy-it-now price and get your tickets instantly. Zero fees added.</p>
+            </div>
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/10">
+                  <svg className="h-4 w-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                </div>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">Tell TicksBid's AI What You Want</span>
+              </div>
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed">Describe in chat the tickets that you want: event type, your budget, locations, number of seats. Let TicksBid buy on your behalf — on your terms.</p>
             </div>
 
           </div>

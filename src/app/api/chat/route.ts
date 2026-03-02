@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
 
   try {
     // 1. Connect to MCP server
+    console.log(`MCP: Connecting to ${MCP_SERVER_URL}`);
     mcpClient = await getMcpClient();
 
     // 2. List available tools from MCP server
@@ -167,8 +168,9 @@ export async function POST(req: NextRequest) {
 
   } catch (err) {
     console.error("Chat API error:", err);
+    const errMsg = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Chat failed" },
+      { error: `${errMsg} (MCP URL: ${MCP_SERVER_URL})` },
       { status: 500 }
     );
   } finally {

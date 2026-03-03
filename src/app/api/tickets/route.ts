@@ -92,6 +92,14 @@ export async function POST(req: NextRequest) {
       )
     `;
 
+    // Add seller_name column if table already existed without it
+    try {
+      await sql`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS seller_name VARCHAR(100)`;
+      await sql`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS listed_at TIMESTAMPTZ DEFAULT now()`;
+    } catch {
+      // column already exists
+    }
+
     await sql`
       CREATE TABLE IF NOT EXISTS auction_states_local (
         id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

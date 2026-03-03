@@ -373,7 +373,7 @@ export default function SellerPanel() {
               <input
                 type="text"
                 value={data.row}
-                onChange={(e) => update({ row: e.target.value })}
+                onChange={(e) => update({ row: e.target.value.toUpperCase() })}
                 placeholder="A"
                 className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--accent)]/40"
               />

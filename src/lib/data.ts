@@ -129,11 +129,37 @@ export async function getEventNames(
 export async function getAuctionState(
   ticketId: string
 ): Promise<AuctionState | null> {
+  // Try AWS API first
   try {
     return await apiGet<AuctionState>(`/auction_states/${ticketId}`);
   } catch {
-    return null;
+    // Fall through to local
   }
+
+  // Fallback: check local auction_states_local table
+  try {
+    const { rows } = await sql`
+      SELECT ticket_id as auction_item_id, auction_status, end_time,
+             reserve_price, buy_it_now_price
+      FROM auction_states_local
+      WHERE ticket_id = ${ticketId}::uuid
+      LIMIT 1
+    `;
+    if (rows.length > 0) {
+      return {
+        auction_item_id: rows[0].auction_item_id,
+        auction_status: rows[0].auction_status,
+        end_time: rows[0].end_time,
+        reserve_price: parseFloat(rows[0].reserve_price),
+        buy_it_now_price: rows[0].buy_it_now_price ? parseFloat(rows[0].buy_it_now_price) : 0,
+        highest_bid: 0,
+      };
+    }
+  } catch {
+    // table may not exist yet
+  }
+
+  return null;
 }
 
 export async function getAuctionDetail(

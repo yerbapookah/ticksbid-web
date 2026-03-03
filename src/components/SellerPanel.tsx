@@ -1,251 +1,515 @@
 "use client";
 
-import { useState } from "react";
-import { useAuth } from "@/lib/auth";
-import Link from "next/link";
+import { useState, useEffect, useRef } from "react";
 
-type SellerStatus = "not_logged_in" | "needs_stripe" | "connecting" | "connected";
+interface EventResult {
+  id: string;
+  name: string;
+  event_type: string;
+  start_time: string;
+  thumbnail_url?: string;
+}
+
+interface ListingData {
+  event: EventResult | null;
+  section: string;
+  row: string;
+  seat: string;
+  ticketType: string;
+  reservePrice: string;
+  buyNowPrice: string;
+  auctionDays: string;
+}
+
+const INITIAL: ListingData = {
+  event: null,
+  section: "",
+  row: "",
+  seat: "",
+  ticketType: "",
+  reservePrice: "",
+  buyNowPrice: "",
+  auctionDays: "7",
+};
+
+function StepIndicator({ current, total }: { current: number; total: number }) {
+  return (
+    <div className="flex items-center gap-1.5 mb-5">
+      {Array.from({ length: total }, (_, i) => (
+        <div
+          key={i}
+          className={`h-1 flex-1 rounded-full transition-colors ${
+            i < current ? "bg-[var(--accent)]" : i === current ? "bg-[var(--accent)]/50" : "bg-[var(--border)]"
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
+function EventSearch({
+  selected,
+  onSelect,
+}: {
+  selected: EventResult | null;
+  onSelect: (e: EventResult | null) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<EventResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    if (query.length < 2) {
+      setResults([]);
+      setOpen(false);
+      return;
+    }
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/events/search?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        setResults(Array.isArray(data) ? data : []);
+        setOpen(true);
+      } catch {
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(debounceRef.current);
+  }, [query]);
+
+  if (selected) {
+    return (
+      <div className="flex items-center justify-between gap-3 rounded-lg border border-[var(--accent)]/30 bg-[var(--accent)]/5 p-3">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-[var(--text-primary)] truncate">{selected.name}</p>
+          <p className="text-xs text-[var(--text-muted)]">
+            {selected.event_type} · {new Date(selected.start_time).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+          </p>
+        </div>
+        <button
+          onClick={() => onSelect(null)}
+          className="flex-shrink-0 rounded-md p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <div className="relative">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => results.length > 0 && setOpen(true)}
+          placeholder="Search for an event…"
+          className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] pl-10 pr-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--accent)]/40"
+        />
+        {loading && (
+          <svg className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-[var(--text-muted)]" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+        )}
+      </div>
+
+      {open && results.length > 0 && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-lg border border-[var(--border)] bg-[var(--bg-card)] shadow-2xl shadow-black/60">
+            {results.map((event) => (
+              <button
+                key={event.id}
+                onClick={() => {
+                  onSelect(event);
+                  setQuery("");
+                  setOpen(false);
+                }}
+                className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-[var(--bg-card-hover)]"
+              >
+                {event.thumbnail_url && (
+                  <img
+                    src={event.thumbnail_url}
+                    alt=""
+                    className="h-10 w-10 rounded-md object-cover flex-shrink-0"
+                  />
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[var(--text-primary)] truncate">{event.name}</p>
+                  <p className="text-xs text-[var(--text-muted)]">
+                    {event.event_type} · {new Date(event.start_time).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      {open && results.length === 0 && query.length >= 2 && !loading && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-4 text-center text-sm text-[var(--text-muted)] shadow-xl">
+          No events found
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function SellerPanel() {
-  const { isLoggedIn, user } = useAuth();
-
-  // Check localStorage for saved Stripe account
-  const savedAccountId = typeof window !== "undefined"
-    ? localStorage.getItem("ticksbid_stripe_account") : null;
-
-  const [status, setStatus] = useState<SellerStatus>(
-    !isLoggedIn ? "not_logged_in" : savedAccountId ? "connected" : "needs_stripe"
-  );
-  const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState(0); // 0=event, 1=seat, 2=pricing, 3=review
+  const [data, setData] = useState<ListingData>(INITIAL);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
-  // Listing form state
-  const [eventSearch, setEventSearch] = useState("");
-  const [section, setSection] = useState("");
-  const [row, setRow] = useState("");
-  const [seat, setSeat] = useState("");
-  const [ticketType, setTicketType] = useState("");
-  const [listSuccess, setListSuccess] = useState(false);
-
-  async function handleConnectStripe() {
-    setLoading(true);
+  function update(partial: Partial<ListingData>) {
+    setData((prev) => ({ ...prev, ...partial }));
     setError("");
+  }
+
+  function canAdvance(): boolean {
+    switch (step) {
+      case 0: return !!data.event;
+      case 1: return !!data.section && !!data.row && !!data.seat;
+      case 2: return !!data.reservePrice && parseFloat(data.reservePrice) > 0;
+      default: return true;
+    }
+  }
+
+  async function handleSubmit() {
+    setSubmitting(true);
+    setError("");
+
+    const reservePrice = parseFloat(data.reservePrice);
+    const buyNowPrice = data.buyNowPrice ? parseFloat(data.buyNowPrice) : null;
+
+    if (buyNowPrice !== null && buyNowPrice <= reservePrice) {
+      setError("Buy Now price must be higher than reserve price");
+      setSubmitting(false);
+      return;
+    }
+
     try {
-      const res = await fetch("/api/stripe/connect", {
+      const res = await fetch("/api/tickets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: "", // Will be collected by Stripe
-          username: user?.username || "",
+          event_id: data.event!.id,
+          seat_section: data.section,
+          seat_row: data.row,
+          seat_number: data.seat,
+          ticket_type: data.ticketType || null,
+          reserve_price: reservePrice,
+          buy_it_now_price: buyNowPrice,
+          auction_duration_days: parseInt(data.auctionDays) || 7,
+          seller_name: "Seller",
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      // Save account ID before redirecting
-      localStorage.setItem("ticksbid_stripe_account", data.accountId);
-      window.location.href = data.url;
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to start onboarding");
-      setLoading(false);
-    }
-  }
 
-  async function handleListTicket() {
-    if (!section || !row || !seat) {
-      setError("Please fill in section, row, and seat");
-      return;
-    }
-    setLoading(true);
-    setError("");
-    setListSuccess(false);
-    try {
-      // TODO: Replace with real event ID from search
-      // For now just show success state
-      await new Promise((r) => setTimeout(r, 800));
-      setListSuccess(true);
-      setSection("");
-      setRow("");
-      setSeat("");
-      setTicketType("");
-      setEventSearch("");
-    } catch (err: unknown) {
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error);
+
+      setSuccess(true);
+    } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to list ticket");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   }
 
-  // Check URL params for Stripe Connect return
-  if (typeof window !== "undefined") {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("stripe_connected") === "true" && status !== "connected") {
-      const accountId = params.get("account_id");
-      if (accountId) localStorage.setItem("ticksbid_stripe_account", accountId);
-      setStatus("connected");
-    }
+  function resetForm() {
+    setData(INITIAL);
+    setStep(0);
+    setSuccess(false);
+    setError("");
+  }
+
+  // Success state
+  if (success) {
+    return (
+      <div className="sticky top-24 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
+        <div className="text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--green)]/15 border border-[var(--green)]/20">
+            <svg className="h-7 w-7 text-[var(--green)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-1">Ticket Listed!</h2>
+          <p className="text-sm text-[var(--text-muted)] mb-2">
+            Section {data.section} · Row {data.row} · Seat {data.seat}
+          </p>
+          <p className="text-xs text-[var(--text-muted)] mb-6">
+            Your auction is live for {data.auctionDays} days. Buyers can bid starting at ${parseFloat(data.reservePrice).toFixed(2)}
+            {data.buyNowPrice ? ` or buy now for $${parseFloat(data.buyNowPrice).toFixed(2)}` : ""}.
+          </p>
+          <button
+            onClick={resetForm}
+            className="w-full rounded-xl bg-[var(--accent)] py-3 text-sm font-semibold text-white transition-all hover:bg-[var(--accent-hover)]"
+          >
+            List Another Ticket
+          </button>
+          <a
+            href={`/events/${data.event?.id}`}
+            className="mt-3 block w-full rounded-xl border border-[var(--border)] py-3 text-center text-sm font-medium text-[var(--text-secondary)] transition-all hover:border-[var(--border-hover)] hover:text-[var(--text-primary)]"
+          >
+            View Event
+          </a>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="sticky top-24 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
-      {/* Not logged in */}
-      {status === "not_logged_in" && (
-        <>
-          <h2 className="mb-1 text-lg font-semibold text-[var(--text-primary)]">Start Selling</h2>
-          <p className="mb-6 text-xs text-[var(--text-muted)]">
-            Sign in to list tickets. Or use the API to list programmatically.
+      <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-1">List a Ticket</h2>
+      <p className="text-xs text-[var(--text-muted)] mb-4">
+        Set your price and let buyers bid or buy instantly.
+      </p>
+
+      <StepIndicator current={step} total={4} />
+
+      {/* Step 0: Select Event */}
+      {step === 0 && (
+        <div>
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+            Event
+          </label>
+          <EventSearch
+            selected={data.event}
+            onSelect={(e) => update({ event: e })}
+          />
+          <p className="mt-2 text-[0.65rem] text-[var(--text-muted)]">
+            Search for the event your ticket is for.
           </p>
-          <Link
-            href="/login"
-            className="mb-3 block w-full rounded-xl bg-[var(--accent)] py-3 text-center text-sm font-semibold text-white transition-all hover:bg-[var(--accent-hover)]"
-          >
-            Log in to sell
-          </Link>
-          <Link
-            href="/"
-            className="block w-full rounded-xl border border-[var(--border)] py-3 text-center text-sm font-medium text-[var(--text-secondary)] transition-all hover:border-[var(--border-hover)] hover:text-[var(--text-primary)]"
-          >
-            Browse Events
-          </Link>
-        </>
+        </div>
       )}
 
-      {/* Logged in but no Stripe */}
-      {status === "needs_stripe" && (
-        <>
-          <h2 className="mb-1 text-lg font-semibold text-[var(--text-primary)]">Connect Payouts</h2>
-          <p className="mb-5 text-xs text-[var(--text-muted)]">
-            Connect your Stripe account to receive payouts when your tickets sell. This takes about 2 minutes.
-          </p>
-
-          <div className="mb-5 rounded-lg bg-[var(--bg-secondary)] p-4">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[#635BFF]/15">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="#635BFF">
-                  <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-[var(--text-primary)]">Powered by Stripe</p>
-                <p className="mt-0.5 text-[0.65rem] text-[var(--text-muted)] leading-relaxed">
-                  Secure identity verification, bank account setup, and tax compliance — all handled by Stripe.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {error && <p className="mb-4 text-xs text-[var(--red)]">{error}</p>}
-
-          <button
-            onClick={handleConnectStripe}
-            disabled={loading}
-            className="mb-3 w-full rounded-xl bg-[#635BFF] py-3 text-sm font-semibold text-white transition-all hover:bg-[#5851ea] disabled:opacity-50"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Setting up…
-              </span>
-            ) : (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z" />
-                </svg>
-                Connect with Stripe
-              </span>
-            )}
-          </button>
-        </>
-      )}
-
-      {/* Connected — show listing form */}
-      {status === "connected" && (
-        <>
-          <div className="mb-5 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)]">List a Ticket</h2>
-            <div className="flex items-center gap-1.5 rounded-full bg-[var(--green)]/10 px-2.5 py-1">
-              <div className="h-1.5 w-1.5 rounded-full bg-[var(--green)]" />
-              <span className="text-[0.6rem] font-semibold text-[var(--green)]">Stripe connected</span>
-            </div>
-          </div>
-
-          {listSuccess && (
-            <div className="mb-4 rounded-lg bg-[var(--green)]/10 border border-[var(--green)]/20 p-3 text-xs text-[var(--green)]">
-              Ticket listed successfully!
-            </div>
-          )}
-
-          <div className="space-y-3">
+      {/* Step 1: Seat Details */}
+      {step === 1 && (
+        <div>
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+            Seat Details
+          </label>
+          <div className="grid grid-cols-3 gap-3 mb-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">Event</label>
+              <label className="mb-1 block text-xs text-[var(--text-secondary)]">Section</label>
               <input
                 type="text"
-                value={eventSearch}
-                onChange={(e) => setEventSearch(e.target.value)}
-                placeholder="Search for an event…"
+                value={data.section}
+                onChange={(e) => update({ section: e.target.value })}
+                placeholder="101"
                 className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--accent)]/40"
               />
             </div>
+            <div>
+              <label className="mb-1 block text-xs text-[var(--text-secondary)]">Row</label>
+              <input
+                type="text"
+                value={data.row}
+                onChange={(e) => update({ row: e.target.value })}
+                placeholder="A"
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--accent)]/40"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-[var(--text-secondary)]">Seat</label>
+              <input
+                type="text"
+                value={data.seat}
+                onChange={(e) => update({ seat: e.target.value })}
+                placeholder="12"
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--accent)]/40"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-[var(--text-secondary)]">Ticket Type</label>
+            <select
+              value={data.ticketType}
+              onChange={(e) => update({ ticketType: e.target.value })}
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]/40"
+            >
+              <option value="">Standard</option>
+              <option value="floor">Floor</option>
+              <option value="ga">General Admission</option>
+              <option value="vip">VIP</option>
+              <option value="box">Box / Suite</option>
+              <option value="accessible">Accessible</option>
+            </select>
+          </div>
+        </div>
+      )}
 
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">Section</label>
+      {/* Step 2: Pricing */}
+      {step === 2 && (
+        <div>
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+            Pricing
+          </label>
+          <div className="space-y-3">
+            <div>
+              <label className="mb-1 block text-xs text-[var(--text-secondary)]">
+                Starting Price (reserve) <span className="text-red-400">*</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-[var(--text-muted)]">$</span>
                 <input
                   type="text"
-                  value={section}
-                  onChange={(e) => setSection(e.target.value)}
-                  placeholder="A"
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--accent)]/40"
+                  inputMode="decimal"
+                  value={data.reservePrice}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === "" || /^\d*\.?\d{0,2}$/.test(v)) update({ reservePrice: v });
+                  }}
+                  placeholder="50.00"
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] pl-7 pr-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--accent)]/40"
                 />
               </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">Row</label>
-                <input
-                  type="text"
-                  value={row}
-                  onChange={(e) => setRow(e.target.value)}
-                  placeholder="12"
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--accent)]/40"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">Seat</label>
-                <input
-                  type="text"
-                  value={seat}
-                  onChange={(e) => setSeat(e.target.value)}
-                  placeholder="5"
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--accent)]/40"
-                />
-              </div>
+              <p className="mt-1 text-[0.65rem] text-[var(--text-muted)]">Bidding starts here. You won&apos;t sell below this price.</p>
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">Type (optional)</label>
+              <label className="mb-1 block text-xs text-[var(--text-secondary)]">
+                Buy Now Price <span className="text-[var(--text-muted)]">(optional)</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-[var(--text-muted)]">$</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={data.buyNowPrice}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === "" || /^\d*\.?\d{0,2}$/.test(v)) update({ buyNowPrice: v });
+                  }}
+                  placeholder="150.00"
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] pl-7 pr-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--accent)]/40"
+                />
+              </div>
+              <p className="mt-1 text-[0.65rem] text-[var(--text-muted)]">Buyers can skip the auction and pay this price instantly.</p>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs text-[var(--text-secondary)]">Auction Duration</label>
               <select
-                value={ticketType}
-                onChange={(e) => setTicketType(e.target.value)}
+                value={data.auctionDays}
+                onChange={(e) => update({ auctionDays: e.target.value })}
                 className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]/40"
               >
-                <option value="">General</option>
-                <option value="floor">Floor</option>
-                <option value="ga">General Admission</option>
-                <option value="vip">VIP</option>
-                <option value="box">Box</option>
+                <option value="1">1 day</option>
+                <option value="3">3 days</option>
+                <option value="5">5 days</option>
+                <option value="7">7 days</option>
+                <option value="10">10 days</option>
+                <option value="14">14 days</option>
               </select>
             </div>
           </div>
+        </div>
+      )}
 
-          {error && <p className="mt-3 text-xs text-[var(--red)]">{error}</p>}
+      {/* Step 3: Review */}
+      {step === 3 && (
+        <div>
+          <label className="mb-3 block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+            Review Listing
+          </label>
+          <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] divide-y divide-[var(--border)]">
+            <div className="px-4 py-3">
+              <p className="text-xs text-[var(--text-muted)]">Event</p>
+              <p className="text-sm font-medium text-[var(--text-primary)]">{data.event?.name}</p>
+              <p className="text-xs text-[var(--text-muted)]">
+                {data.event?.start_time && new Date(data.event.start_time).toLocaleDateString("en-US", {
+                  weekday: "short", month: "short", day: "numeric", year: "numeric"
+                })}
+              </p>
+            </div>
+            <div className="px-4 py-3">
+              <p className="text-xs text-[var(--text-muted)]">Seat</p>
+              <p className="text-sm font-medium text-[var(--text-primary)]">
+                Section {data.section} · Row {data.row} · Seat {data.seat}
+                {data.ticketType ? ` · ${data.ticketType.toUpperCase()}` : ""}
+              </p>
+            </div>
+            <div className="px-4 py-3 flex items-center justify-between">
+              <div>
+                <p className="text-xs text-[var(--text-muted)]">Starting Price</p>
+                <p className="text-lg font-bold text-[var(--green)]">${parseFloat(data.reservePrice).toFixed(2)}</p>
+              </div>
+              {data.buyNowPrice && (
+                <div className="text-right">
+                  <p className="text-xs text-[var(--text-muted)]">Buy Now</p>
+                  <p className="text-lg font-bold text-[var(--text-primary)]">${parseFloat(data.buyNowPrice).toFixed(2)}</p>
+                </div>
+              )}
+            </div>
+            <div className="px-4 py-3">
+              <p className="text-xs text-[var(--text-muted)]">Auction Duration</p>
+              <p className="text-sm font-medium text-[var(--text-primary)]">{data.auctionDays} days</p>
+            </div>
+          </div>
 
+          {/* Fee estimate */}
+          {data.buyNowPrice && (
+            <div className="mt-3 rounded-lg bg-[var(--bg-secondary)] px-4 py-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-[var(--text-muted)]">Est. seller fee (8%)</span>
+                <span className="text-xs font-medium text-[var(--text-secondary)]">
+                  -${(parseFloat(data.buyNowPrice) * 0.08).toFixed(2)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-xs text-[var(--text-muted)]">Est. payout at Buy Now</span>
+                <span className="text-xs font-semibold text-[var(--green)]">
+                  ${(parseFloat(data.buyNowPrice) * 0.92).toFixed(2)}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Error */}
+      {error && <p className="mt-3 text-xs text-red-500">{error}</p>}
+
+      {/* Navigation buttons */}
+      <div className="mt-5 flex gap-3">
+        {step > 0 && (
           <button
-            onClick={handleListTicket}
-            disabled={loading}
-            className="mt-4 w-full rounded-xl bg-[var(--accent)] py-3 text-sm font-semibold text-white transition-all hover:bg-[var(--accent-hover)] disabled:opacity-50"
+            onClick={() => setStep(step - 1)}
+            className="flex-1 rounded-xl border border-[var(--border)] py-3 text-sm font-medium text-[var(--text-secondary)] transition-all hover:border-[var(--border-hover)] hover:text-[var(--text-primary)]"
           >
-            {loading ? (
+            Back
+          </button>
+        )}
+        {step < 3 ? (
+          <button
+            onClick={() => setStep(step + 1)}
+            disabled={!canAdvance()}
+            className="flex-1 rounded-xl bg-[var(--accent)] py-3 text-sm font-semibold text-white transition-all hover:bg-[var(--accent-hover)] disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            Continue
+          </button>
+        ) : (
+          <button
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="flex-1 rounded-xl bg-[var(--green)] py-3 text-sm font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50"
+          >
+            {submitting ? (
               <span className="flex items-center justify-center gap-2">
                 <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -253,22 +517,24 @@ export default function SellerPanel() {
                 </svg>
                 Listing…
               </span>
-            ) : "List Ticket"}
+            ) : (
+              "List Ticket"
+            )}
           </button>
-        </>
-      )}
+        )}
+      </div>
 
-      {/* API callout — always shown */}
+      {/* Agent API callout */}
       <div className="mt-6 rounded-lg bg-[var(--bg-secondary)] p-4">
         <div className="mb-2 flex items-center gap-2">
           <div className="h-1.5 w-1.5 rounded-full bg-[var(--green)] animate-pulse" />
           <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-            Agent API
+            Seller API
           </span>
         </div>
-        <code className="text-xs text-[var(--text-muted)]">POST /tickets/</code>
+        <code className="text-xs text-[var(--text-muted)]">POST /api/tickets</code>
         <p className="mt-2 text-xs text-[var(--text-muted)]">
-          List tickets programmatically with a delegated agent token.
+          List tickets programmatically. Send event_id, seat details, and pricing.
         </p>
       </div>
     </div>

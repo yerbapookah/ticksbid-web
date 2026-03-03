@@ -91,9 +91,7 @@ function Header() {
             </Link>
           </nav>
 
-          <div className="hidden md:block">
-            <HeaderAuth />
-          </div>
+          <HeaderAuth />
           <MobileMenu />
         </div>
       </div>

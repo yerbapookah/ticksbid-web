@@ -78,8 +78,8 @@ function HeroBanner() {
       <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)]/8 via-transparent to-purple-900/5" />
       <div className="absolute -right-40 -top-40 h-96 w-96 rounded-full bg-[var(--accent)]/5 blur-3xl" />
       <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-purple-800/5 blur-3xl" />
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] lg:grid-cols-[1fr_420px] gap-6 md:gap-12 items-center">
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-20">
+        <div className="flex flex-col gap-6 md:grid md:grid-cols-[1fr_380px] lg:grid-cols-[1fr_420px] md:gap-12 md:items-center">
           <div>
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--accent)]/20 bg-[var(--accent)]/5 px-4 py-1.5">
               <div className="h-1.5 w-1.5 rounded-full bg-[var(--green)] animate-pulse" />

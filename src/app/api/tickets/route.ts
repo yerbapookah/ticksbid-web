@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       ticket_type,
       reserve_price,
       buy_it_now_price,
-      event_start_time,
+      auction_end_time,
       seller_name,
     } = body;
 
@@ -61,9 +61,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!event_start_time) {
+    if (!auction_end_time) {
       return NextResponse.json(
-        { error: "event_start_time is required to set auction end time" },
+        { error: "auction_end_time is required" },
         { status: 400 }
       );
     }
@@ -121,9 +121,9 @@ export async function POST(req: NextRequest) {
     const ticket = ticketRows[0];
     const ticketId = ticket.id;
 
-    // 2. Auction ends 2 hours before event start
-    const eventStart = new Date(event_start_time).getTime();
-    const endTime = new Date(eventStart - 2 * 60 * 60 * 1000).toISOString();
+    // 2. Use the auction end time provided by the client
+    //    (already capped at 2hrs before event on the frontend)
+    const endTime = new Date(auction_end_time).toISOString();
 
     // 3. Try to create auction state on AWS API
     let auctionCreatedOnAws = false;

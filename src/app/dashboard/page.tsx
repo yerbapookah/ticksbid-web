@@ -218,29 +218,18 @@ function OrdersSection() {
   const attended = MOCK_ORDERS.filter((o) => o.status === "attended");
 
   const renderOrder = (order: typeof MOCK_ORDERS[0]) => (
-    <div key={order.id} className="flex gap-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 transition-colors hover:border-[var(--border-hover)]">
-      <div className="h-20 w-28 flex-shrink-0 overflow-hidden rounded-lg bg-[var(--bg-secondary)]">
-        {order.thumbnail ? (
-          <img src={order.thumbnail} alt={order.eventName} className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-lg font-bold text-[var(--text-muted)]">{order.eventName.charAt(0)}</div>
-        )}
+    <div key={order.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:p-4 transition-colors hover:border-[var(--border-hover)]">
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <h3 className="text-sm font-semibold text-[var(--text-primary)] truncate">{order.eventName}</h3>
+        <StatusPill status={order.status} />
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-semibold text-[var(--text-primary)] truncate">{order.eventName}</h3>
-            <p className="mt-0.5 text-xs text-[var(--text-muted)]">{order.venue}</p>
-          </div>
-          <StatusPill status={order.status} />
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-[var(--text-secondary)]">
-          <span>{formatDate(order.eventDate)} · {formatTime(order.eventDate)}</span>
-          <span>Sec {order.section} · Row {order.row} · Seat {order.seat}</span>
-          <span className="font-semibold text-[var(--text-primary)]">{formatCurrency(order.totalPaid)}</span>
-        </div>
-        <p className="mt-1.5 text-[0.7rem] text-[var(--text-muted)]">Purchased {formatDate(order.purchaseDate)}</p>
+      <p className="text-xs text-[var(--text-muted)] mb-2">{order.venue}</p>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--text-secondary)]">
+        <span>{formatDate(order.eventDate)} · {formatTime(order.eventDate)}</span>
+        <span>Sec {order.section} · Row {order.row} · Seat {order.seat}</span>
+        <span className="font-semibold text-[var(--text-primary)]">{formatCurrency(order.totalPaid)}</span>
       </div>
+      <p className="mt-1.5 text-[0.65rem] text-[var(--text-muted)]">Purchased {formatDate(order.purchaseDate)}</p>
     </div>
   );
 
@@ -270,7 +259,7 @@ function SalesSection() {
   const completed = MOCK_SALES.filter((s) => s.status === "completed");
 
   const renderSale = (sale: typeof MOCK_SALES[0]) => (
-    <div key={sale.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 transition-colors hover:border-[var(--border-hover)]">
+    <div key={sale.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:p-4 transition-colors hover:border-[var(--border-hover)]">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-[var(--text-primary)]">{sale.eventName}</h3>
@@ -336,7 +325,7 @@ function BidsSection() {
 
       <div className="flex flex-col gap-3">
         {MOCK_BIDS.map((bid) => (
-          <div key={bid.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 transition-colors hover:border-[var(--border-hover)]">
+          <div key={bid.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:p-4 transition-colors hover:border-[var(--border-hover)]">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-sm font-semibold text-[var(--text-primary)]">{bid.eventName}</h3>
@@ -391,7 +380,7 @@ function OffersSection() {
 
       <div className="flex flex-col gap-3">
         {MOCK_OFFERS.map((offer) => (
-          <div key={offer.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 transition-colors hover:border-[var(--border-hover)]">
+          <div key={offer.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:p-4 transition-colors hover:border-[var(--border-hover)]">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-sm font-semibold text-[var(--text-primary)]">{offer.eventName}</h3>
@@ -444,7 +433,7 @@ function WalletSection() {
       <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Payment Methods</h3>
       <div className="mb-8 flex flex-col gap-3">
         {MOCK_WALLET.paymentMethods.map((pm) => (
-          <div key={pm.id} className="flex items-center gap-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 transition-colors hover:border-[var(--border-hover)]">
+          <div key={pm.id} className="flex items-center gap-3 sm:gap-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:p-4 transition-colors hover:border-[var(--border-hover)]">
             <div className="flex h-10 w-14 items-center justify-center rounded-lg bg-[var(--bg-secondary)] text-sm font-bold text-[var(--text-muted)]">
               {cardIcon[pm.type] || "?"}
             </div>
@@ -468,7 +457,7 @@ function WalletSection() {
       <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Crypto Wallets</h3>
       <div className="flex flex-col gap-3">
         {MOCK_WALLET.cryptoWallets.map((cw) => (
-          <div key={cw.id} className="flex items-center gap-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 transition-colors hover:border-[var(--border-hover)]">
+          <div key={cw.id} className="flex items-center gap-3 sm:gap-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:p-4 transition-colors hover:border-[var(--border-hover)]">
             <div className="flex h-10 w-14 items-center justify-center rounded-lg bg-[var(--green)]/10 text-sm font-bold text-[var(--green)]">
               $
             </div>
@@ -560,9 +549,9 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-10">
-      <div className="mb-6 sm:mb-8 fade-up">
-        <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">Dashboard</h1>
+    <div className="mx-auto max-w-7xl px-3 sm:px-6 py-6 sm:py-10">
+      <div className="mb-5 sm:mb-8 fade-up">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--text-primary)]">Dashboard</h1>
         <p className="mt-1 text-sm text-[var(--text-muted)]">Manage your tickets, bids, and payments</p>
       </div>
 

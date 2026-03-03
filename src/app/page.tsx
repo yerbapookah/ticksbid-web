@@ -46,8 +46,8 @@ function EventCard({ event, index, popular, ticketCount }: { event: EventSummary
             </div>
           )}
         </div>
-        <div className="p-5">
-          <h3 className="mb-2 text-[0.95rem] font-semibold leading-tight text-[var(--text-primary)] group-hover:text-[var(--accent-hover)] transition-colors">
+        <div className="p-3 sm:p-5">
+          <h3 className="mb-1.5 sm:mb-2 text-[0.85rem] sm:text-[0.95rem] font-semibold leading-tight text-[var(--text-primary)] group-hover:text-[var(--accent-hover)] transition-colors">
             {event.name}
           </h3>
           {ticketCount != null && ticketCount > 0 && (
@@ -78,22 +78,22 @@ function HeroBanner() {
       <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)]/8 via-transparent to-purple-900/5" />
       <div className="absolute -right-40 -top-40 h-96 w-96 rounded-full bg-[var(--accent)]/5 blur-3xl" />
       <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-purple-800/5 blur-3xl" />
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] lg:grid-cols-[1fr_420px] gap-8 md:gap-12 items-center">
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-20">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] lg:grid-cols-[1fr_420px] gap-6 md:gap-12 items-center">
           <div>
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--accent)]/20 bg-[var(--accent)]/5 px-4 py-1.5">
               <div className="h-1.5 w-1.5 rounded-full bg-[var(--green)] animate-pulse" />
               <span className="text-xs font-medium text-[var(--accent-hover)]">Zero buyer fees — always</span>
             </div>
-            <h1 className="mb-4 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl md:text-5xl">
+            <h1 className="mb-3 sm:mb-4 text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl md:text-5xl">
               Tickets for humans<br />
               <span className="text-[var(--text-muted)]">and their agents</span>
             </h1>
-            <p className="max-w-lg text-lg text-[var(--text-secondary)]">
+            <p className="max-w-lg text-sm sm:text-lg text-[var(--text-secondary)]">
               A secondary ticket marketplace with transparent pricing, no hidden fees, and a first-class API. Browse yourself or let your AI agent find the best deal.
             </p>
-            <div className="mt-6">
-              <a href="/login?signup=true" className="inline-flex items-center gap-2 rounded-xl bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-[var(--accent-hover)]">
+            <div className="mt-4 sm:mt-6">
+              <a href="/login?signup=true" className="inline-flex items-center gap-2 rounded-xl bg-[var(--accent)] px-5 py-2.5 sm:px-6 sm:py-3 text-sm font-semibold text-white transition-all hover:bg-[var(--accent-hover)]">
                 Get Started
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </a>
@@ -101,9 +101,9 @@ function HeroBanner() {
           </div>
 
           {/* How it works */}
-          <div className="flex flex-col gap-3">
-            <h2 style={{ transform: 'skewX(-8deg)' }} className="text-sm font-semibold uppercase tracking-widest text-[var(--text-primary)] mb-2">Three ways to buy</h2>
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-4">
+          <div className="flex flex-col gap-2 sm:gap-3">
+            <h2 style={{ transform: 'skewX(-8deg)' }} className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-[var(--text-primary)] mb-1 sm:mb-2">Three ways to buy</h2>
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-3 sm:p-4">
               <div className="flex items-center gap-3 mb-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)]/10">
                   <svg className="h-4 w-4 text-[var(--accent-hover)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
@@ -112,7 +112,7 @@ function HeroBanner() {
               </div>
               <p className="text-xs text-[var(--text-muted)] leading-relaxed">Name your price before the auction ends. Set a max auto-bid and the system competes for you.</p>
             </div>
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-4">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-3 sm:p-4">
               <div className="flex items-center gap-3 mb-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--green)]/10">
                   <svg className="h-4 w-4 text-[var(--green)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
@@ -121,7 +121,7 @@ function HeroBanner() {
               </div>
               <p className="text-xs text-[var(--text-muted)] leading-relaxed">Pay the buy-it-now price and get your tickets instantly. Zero fees added.</p>
             </div>
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-4">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-3 sm:p-4">
               <div className="flex items-center gap-3 mb-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/10">
                   <svg className="h-4 w-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
@@ -163,8 +163,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
   return (
     <>
       <HeroBanner />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-12">
-        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 py-6 sm:py-12">
+        <div className="mb-5 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div>
             <h2 className="text-xl font-semibold text-[var(--text-primary)]">
               {query ? `Results for "${query}"` : "All Events"}
@@ -204,7 +204,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
         )}
 
         {events.length > 0 && (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-3 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {events.map((event, i) => (
               <EventCard key={event.id} event={event} index={i} popular={i === 0 || i === 2 || i === 4} ticketCount={ticketCounts[event.id]} />
             ))}

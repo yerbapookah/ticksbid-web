@@ -38,10 +38,10 @@ function Logo({ size = 32 }: { size?: number }) {
 function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg-primary)]/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6 md:gap-4">
+      <div className="mx-auto flex h-12 sm:h-14 max-w-7xl items-center gap-2 px-3 sm:px-6 md:gap-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
-          <Logo size={32} />
+        <Link href="/" className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
+          <Logo size={28} />
           <span className="text-lg font-semibold tracking-tight text-[var(--text-primary)] hidden sm:block">
             TicksBid
           </span>
@@ -59,7 +59,7 @@ function Header() {
               type="text"
               name="q"
               placeholder="Search events..."
-              className="flex-1 bg-transparent px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none min-w-0"
+              className="flex-1 bg-transparent px-2 sm:px-3 py-1.5 sm:py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none min-w-0"
             />
           </div>
         </form>
@@ -101,12 +101,12 @@ function Footer() {
       {/* Accent glow along top */}
       <div className="h-px bg-gradient-to-r from-transparent via-[var(--accent)]/30 to-transparent" />
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-14 pb-10">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-10 sm:pt-14 pb-8 sm:pb-10">
         {/* Top row: tagline left, columns + icons right */}
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-2 md:grid-cols-[1fr_160px_160px_60px] lg:grid-cols-[1fr_160px_160px_160px_60px]">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-[1fr_160px_160px_60px] lg:grid-cols-[1fr_160px_160px_160px_60px]">
           {/* Tagline + logo */}
-          <div className="flex flex-col gap-5 col-span-2 md:col-span-1">
-            <p className="text-2xl font-bold leading-snug text-[var(--text-primary)]">
+          <div className="flex flex-col gap-4 sm:gap-5 sm:col-span-2 md:col-span-1">
+            <p className="text-xl sm:text-2xl font-bold leading-snug text-[var(--text-primary)]">
               Stop overpaying.<br />Start bidding.
             </p>
             <div className="flex items-center gap-2.5">
@@ -116,7 +116,7 @@ function Footer() {
           </div>
 
           {/* Company */}
-          <div className="flex flex-col gap-3">
+          <div className="hidden sm:flex flex-col gap-3">
             <span className="text-sm font-semibold text-[var(--text-primary)]">Company</span>
             <Link href="/" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">Home</Link>
             <Link href="/about" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">About</Link>
@@ -126,7 +126,7 @@ function Footer() {
           </div>
 
           {/* Socials text */}
-          <div className="flex flex-col gap-3">
+          <div className="hidden sm:flex flex-col gap-3">
             <span className="text-sm font-semibold text-[var(--text-primary)]">Socials</span>
             <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">Instagram</a>
             <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">LinkedIn</a>
@@ -138,7 +138,7 @@ function Footer() {
           <div className="hidden lg:block" />
 
           {/* Large social icons */}
-          <div className="flex md:flex-col items-center md:items-end gap-3 col-span-2 md:col-span-1">
+          <div className="flex md:flex-col items-center md:items-end gap-3 sm:col-span-2 md:col-span-1">
             <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--accent)]/30 bg-[var(--accent)]/10 text-[var(--accent)] transition-all hover:bg-[var(--accent)]/20 hover:border-[var(--accent)]/50">
               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919C8.416 2.175 8.796 2.163 12 2.163zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12s.014 3.668.072 4.948c.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24s3.668-.014 4.948-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948s-.014-3.667-.072-4.947c-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
             </a>

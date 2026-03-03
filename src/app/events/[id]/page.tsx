@@ -68,21 +68,21 @@ export default async function EventDetailPage({
   const eventStartTime = event.start_time;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8">
+    <div className="mx-auto max-w-7xl px-3 sm:px-6 py-4 sm:py-8">
       {/* Top bar: back + event name + badge */}
-      <div className="mb-6 fade-up">
+      <div className="mb-4 sm:mb-6 fade-up">
         <Link
           href="/"
-          className="mb-4 inline-flex items-center gap-2 text-sm text-[var(--text-muted)] transition-colors hover:text-[var(--text-secondary)]"
+          className="mb-3 sm:mb-4 inline-flex items-center gap-2 text-sm text-[var(--text-muted)] transition-colors hover:text-[var(--text-secondary)]"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
-          Back to events
+          Back
         </Link>
 
         <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)] md:text-3xl">
+          <h1 className="text-xl font-bold tracking-tight text-[var(--text-primary)] sm:text-2xl md:text-3xl">
             {event.name}
           </h1>
           <EventTypeBadge type={event.event_type} />
@@ -154,8 +154,8 @@ export default async function EventDetailPage({
             )}
 
             {/* Event details card */}
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-              <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:p-5">
+              <h3 className="mb-3 sm:mb-4 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                 Event Details
               </h3>
 

@@ -10,10 +10,10 @@ export default function MobileMenu() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex md:hidden h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-card)] transition-all hover:border-[var(--border-hover)]"
+        className="flex md:hidden h-10 w-10 items-center justify-center rounded-lg border border-[var(--border-hover)] bg-[var(--bg-card)] transition-all active:scale-95 flex-shrink-0"
         aria-label="Open menu"
       >
-        <svg className="h-4 w-4 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg className="h-5 w-5 text-[var(--text-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>

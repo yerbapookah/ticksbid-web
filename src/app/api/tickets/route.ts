@@ -92,12 +92,13 @@ export async function POST(req: NextRequest) {
       )
     `;
 
-    // Add seller_name column if table already existed without it
+    // Patch existing table: add missing columns + ensure id has a default
     try {
       await sql`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS seller_name VARCHAR(100)`;
       await sql`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS listed_at TIMESTAMPTZ DEFAULT now()`;
+      await sql`ALTER TABLE tickets ALTER COLUMN id SET DEFAULT gen_random_uuid()`;
     } catch {
-      // column already exists
+      // already set
     }
 
     await sql`

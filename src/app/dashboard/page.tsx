@@ -1,9 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
-// ─── Mock Data ───────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────
+
+interface Listing {
+  id: string;
+  event_id: string;
+  event_name: string;
+  event_date: string | null;
+  venue_name: string;
+  seat_section: string;
+  seat_row: string;
+  seat_number: string;
+  ticket_type: string | null;
+  seller_name: string;
+  listed_at: string;
+  auction_status: string;
+  reserve_price: number;
+  buy_it_now_price: number | null;
+  end_time: string;
+  highest_bid: number;
+}
+
+// ─── Mock Data (Orders & Bids — will be replaced with real data later) ───
 
 const MOCK_ORDERS = [
   {
@@ -18,7 +39,6 @@ const MOCK_ORDERS = [
     seat: "12",
     totalPaid: 385,
     status: "upcoming" as const,
-    thumbnail: "https://images.unsplash.com/photo-1616353352910-15d970ac020b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400",
   },
   {
     id: "ord-002",
@@ -32,7 +52,6 @@ const MOCK_ORDERS = [
     seat: "GA",
     totalPaid: 499,
     status: "upcoming" as const,
-    thumbnail: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
   },
   {
     id: "ord-003",
@@ -46,42 +65,6 @@ const MOCK_ORDERS = [
     seat: "8",
     totalPaid: 175,
     status: "attended" as const,
-    thumbnail: "https://images.unsplash.com/photo-1583422409516-2895a77efded?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-  },
-];
-
-const MOCK_SALES = [
-  {
-    id: "sale-001",
-    eventName: "Knicks vs. Celtics",
-    eventType: "sports",
-    venue: "Madison Square Garden, New York",
-    eventDate: "2026-03-22T19:30:00",
-    listDate: "2026-02-15T11:20:00",
-    soldDate: "2026-02-20T16:45:00",
-    section: "118",
-    row: "14",
-    seat: "5",
-    salePrice: 220,
-    fee: 17.6,
-    netEarnings: 202.4,
-    status: "completed" as const,
-  },
-  {
-    id: "sale-002",
-    eventName: "Dave Chappelle Live",
-    eventType: "comedy",
-    venue: "Radio City Music Hall, New York",
-    eventDate: "2026-04-05T21:00:00",
-    listDate: "2026-02-22T08:00:00",
-    soldDate: null,
-    section: "Mezzanine",
-    row: "B",
-    seat: "22",
-    salePrice: 310,
-    fee: null,
-    netEarnings: null,
-    status: "pending" as const,
   },
 ];
 
@@ -121,35 +104,6 @@ const MOCK_BIDS = [
     currentHigh: 195,
     auctionEnds: "2026-02-28T12:00:00",
     status: "winning" as const,
-  },
-];
-
-const MOCK_OFFERS = [
-  {
-    id: "offer-001",
-    eventName: "Coachella Music Festival 2026",
-    eventType: "festival",
-    section: "VIP",
-    row: "-",
-    seat: "VIP",
-    offerAmount: 650,
-    listedPrice: 799,
-    offerDate: "2026-02-21T10:30:00",
-    expiresAt: "2026-02-26T10:30:00",
-    status: "pending" as const,
-  },
-  {
-    id: "offer-002",
-    eventName: "Lakers vs. Clippers",
-    eventType: "sports",
-    section: "210",
-    row: "8",
-    seat: "15",
-    offerAmount: 95,
-    listedPrice: 130,
-    offerDate: "2026-02-23T14:00:00",
-    expiresAt: "2026-02-28T14:00:00",
-    status: "pending" as const,
   },
 ];
 
@@ -197,7 +151,9 @@ function StatusPill({ status }: { status: string }) {
   const map: Record<string, { bg: string; text: string; label: string }> = {
     upcoming: { bg: "bg-[var(--accent)]/10", text: "text-[var(--accent-hover)]", label: "Upcoming" },
     attended: { bg: "bg-[var(--text-muted)]/10", text: "text-[var(--text-muted)]", label: "Attended" },
-    completed: { bg: "bg-[var(--green)]/10", text: "text-[var(--green)]", label: "Completed" },
+    completed: { bg: "bg-[var(--green)]/10", text: "text-[var(--green)]", label: "Sold" },
+    active: { bg: "bg-[var(--green)]/10", text: "text-[var(--green)]", label: "Active" },
+    ended: { bg: "bg-[var(--text-muted)]/10", text: "text-[var(--text-muted)]", label: "Ended" },
     pending: { bg: "bg-[var(--amber)]/10", text: "text-[var(--amber)]", label: "Pending" },
     winning: { bg: "bg-[var(--green)]/10", text: "text-[var(--green)]", label: "Winning" },
     outbid: { bg: "bg-[var(--red)]/10", text: "text-[var(--red)]", label: "Outbid" },
@@ -205,7 +161,7 @@ function StatusPill({ status }: { status: string }) {
   const s = map[status] || map.pending;
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-wider ${s.bg} ${s.text}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${status === "winning" || status === "completed" ? "bg-[var(--green)]" : status === "outbid" ? "bg-[var(--red)]" : status === "upcoming" ? "bg-[var(--accent-hover)]" : "bg-current"} ${status === "winning" ? "animate-pulse" : ""}`} />
+      <span className={`h-1.5 w-1.5 rounded-full bg-current ${status === "winning" || status === "active" ? "animate-pulse" : ""}`} />
       {s.label}
     </span>
   );
@@ -254,63 +210,50 @@ function OrdersSection() {
   );
 }
 
-function SalesSection() {
-  const pending = MOCK_SALES.filter((s) => s.status === "pending");
-  const completed = MOCK_SALES.filter((s) => s.status === "completed");
-
-  const renderSale = (sale: typeof MOCK_SALES[0]) => (
-    <div key={sale.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:p-4 transition-colors hover:border-[var(--border-hover)]">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-sm font-semibold text-[var(--text-primary)]">{sale.eventName}</h3>
-          <p className="mt-0.5 text-xs text-[var(--text-muted)]">{sale.venue}</p>
-        </div>
-        <StatusPill status={sale.status} />
-      </div>
-      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-[var(--text-secondary)]">
-        <span>{formatDate(sale.eventDate)} · {formatTime(sale.eventDate)}</span>
-        <span>Sec {sale.section} · Row {sale.row} · Seat {sale.seat}</span>
-      </div>
-      <div className="mt-3 flex items-center gap-4 rounded-lg bg-[var(--bg-secondary)] px-3 py-2 text-xs">
-        <div>
-          <span className="text-[var(--text-muted)]">Listed </span>
-          <span className="font-semibold text-[var(--text-primary)]">{formatCurrency(sale.salePrice)}</span>
-        </div>
-        {sale.fee !== null && (
-          <div>
-            <span className="text-[var(--text-muted)]">Fee </span>
-            <span className="text-[var(--text-secondary)]">{formatCurrency(sale.fee)}</span>
-          </div>
-        )}
-        {sale.netEarnings !== null && (
-          <div>
-            <span className="text-[var(--text-muted)]">Net </span>
-            <span className="font-semibold text-[var(--green)]">{formatCurrency(sale.netEarnings)}</span>
-          </div>
-        )}
-      </div>
-      <p className="mt-2 text-[0.7rem] text-[var(--text-muted)]">
-        Listed {formatDate(sale.listDate)}
-        {sale.soldDate && ` · Sold ${formatDate(sale.soldDate)}`}
-      </p>
-    </div>
-  );
+function SalesSection({ listings }: { listings: Listing[] }) {
+  const sold = listings.filter((l) => l.auction_status === "completed" || l.auction_status === "sold");
 
   return (
     <div>
       <h2 className="mb-1 text-xl font-semibold text-[var(--text-primary)]">Sales</h2>
-      <p className="mb-6 text-sm text-[var(--text-muted)]">Tickets you&apos;re selling or have sold</p>
+      <p className="mb-6 text-sm text-[var(--text-muted)]">Tickets you&apos;ve sold</p>
 
-      {pending.length > 0 && (
-        <div className="mb-8">
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Pending ({pending.length})</h3>
-          <div className="flex flex-col gap-3">{pending.map(renderSale)}</div>
+      {sold.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-[var(--border)] p-8 text-center">
+          <p className="text-sm text-[var(--text-muted)] mb-1">No completed sales yet</p>
+          <p className="text-xs text-[var(--text-muted)]">When one of your listed tickets sells, it will appear here.</p>
         </div>
-      )}
-      {completed.length > 0 && (
-        <div>
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Completed ({completed.length})</h3>
-          <div className="flex flex-col gap-3">{completed.map(renderSale)}</div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {sold.map((sale) => (
+            <div key={sale.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:p-4 transition-colors hover:border-[var(--border-hover)]">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)]">{sale.event_name}</h3>
+                  <p className="mt-0.5 text-xs text-[var(--text-muted)]">{sale.venue_name}</p>
+                </div>
+                <StatusPill status="completed" />
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--text-secondary)]">
+                {sale.event_date && <span>{formatDate(sale.event_date)}</span>}
+                <span>Sec {sale.seat_section} · Row {sale.seat_row} · Seat {sale.seat_number}</span>
+              </div>
+              <div className="mt-3 flex items-center gap-4 rounded-lg bg-[var(--bg-secondary)] px-3 py-2 text-xs">
+                <div>
+                  <span className="text-[var(--text-muted)]">Sold for </span>
+                  <span className="font-semibold text-[var(--text-primary)]">{formatCurrency(sale.highest_bid)}</span>
+                </div>
+                <div>
+                  <span className="text-[var(--text-muted)]">Fee </span>
+                  <span className="text-[var(--text-secondary)]">{formatCurrency(sale.highest_bid * 0.08)}</span>
+                </div>
+                <div>
+                  <span className="text-[var(--text-muted)]">Net </span>
+                  <span className="font-semibold text-[var(--green)]">{formatCurrency(sale.highest_bid * 0.92)}</span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -372,52 +315,148 @@ function BidsSection() {
   );
 }
 
-function OffersSection() {
-  return (
-    <div>
-      <h2 className="mb-1 text-xl font-semibold text-[var(--text-primary)]">Active Offers</h2>
-      <p className="mb-6 text-sm text-[var(--text-muted)]">Offers you&apos;ve made on listed tickets</p>
+function OffersSection({ listings, loading }: { listings: Listing[]; loading: boolean }) {
+  const active = listings.filter((l) => {
+    if (l.auction_status === "completed" || l.auction_status === "sold") return false;
+    // Check if auction has ended by time
+    if (l.end_time && new Date(l.end_time).getTime() < Date.now()) return false;
+    return true;
+  });
+  const ended = listings.filter((l) => {
+    if (l.auction_status === "completed" || l.auction_status === "sold") return false;
+    if (l.end_time && new Date(l.end_time).getTime() < Date.now()) return true;
+    return false;
+  });
 
-      <div className="flex flex-col gap-3">
-        {MOCK_OFFERS.map((offer) => (
-          <div key={offer.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:p-4 transition-colors hover:border-[var(--border-hover)]">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-semibold text-[var(--text-primary)]">{offer.eventName}</h3>
-                <div className="mt-1 flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                  <EventTypeBadge type={offer.eventType} />
-                  <span>Sec {offer.section} · Row {offer.row} · Seat {offer.seat}</span>
-                </div>
-              </div>
-              <StatusPill status={offer.status} />
-            </div>
-            <div className="mt-3 grid grid-cols-3 gap-3 rounded-lg bg-[var(--bg-secondary)] px-3 py-2.5 text-xs">
-              <div>
-                <div className="text-[var(--text-muted)]">Your Offer</div>
-                <div className="mt-0.5 font-semibold text-[var(--accent-hover)]">{formatCurrency(offer.offerAmount)}</div>
-              </div>
-              <div>
-                <div className="text-[var(--text-muted)]">Listed Price</div>
-                <div className="mt-0.5 font-semibold text-[var(--text-primary)]">{formatCurrency(offer.listedPrice)}</div>
-              </div>
-              <div>
-                <div className="text-[var(--text-muted)]">Discount</div>
-                <div className="mt-0.5 font-semibold text-[var(--green)]">{Math.round((1 - offer.offerAmount / offer.listedPrice) * 100)}% off</div>
-              </div>
-            </div>
-            <div className="mt-2 flex items-center justify-between text-[0.7rem] text-[var(--text-muted)]">
-              <span>Offered {formatDate(offer.offerDate)}</span>
-              <span className="text-[var(--amber)]">Expires {formatDate(offer.expiresAt)}</span>
-            </div>
-            <div className="mt-3">
-              <Link href={`/auctions/${offer.id}`} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--accent)] py-2 text-xs font-medium text-white transition-all hover:bg-[var(--accent-hover)]">
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                View Listing
-              </Link>
+  const renderListing = (listing: Listing) => {
+    const isActive = listing.end_time && new Date(listing.end_time).getTime() > Date.now();
+    return (
+      <div key={listing.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:p-4 transition-colors hover:border-[var(--border-hover)]">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] truncate">{listing.event_name}</h3>
+            {listing.venue_name && (
+              <p className="mt-0.5 text-xs text-[var(--text-muted)] truncate">{listing.venue_name}</p>
+            )}
+          </div>
+          <StatusPill status={isActive ? "active" : "ended"} />
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--text-secondary)]">
+          {listing.event_date && <span>{formatDate(listing.event_date)}</span>}
+          <span>Sec {listing.seat_section} · Row {listing.seat_row} · Seat {listing.seat_number}</span>
+          {listing.ticket_type && <span className="capitalize">{listing.ticket_type}</span>}
+        </div>
+
+        <div className="mt-3 grid grid-cols-3 gap-3 rounded-lg bg-[var(--bg-secondary)] px-3 py-2.5 text-xs">
+          <div>
+            <div className="text-[var(--text-muted)]">Reserve</div>
+            <div className="mt-0.5 font-semibold text-[var(--text-primary)]">
+              {listing.reserve_price > 0 ? formatCurrency(listing.reserve_price) : "None"}
             </div>
           </div>
-        ))}
+          <div>
+            <div className="text-[var(--text-muted)]">Buy Now</div>
+            <div className="mt-0.5 font-semibold text-[var(--text-primary)]">
+              {listing.buy_it_now_price ? formatCurrency(listing.buy_it_now_price) : "—"}
+            </div>
+          </div>
+          <div>
+            <div className="text-[var(--text-muted)]">High Bid</div>
+            <div className={`mt-0.5 font-semibold ${listing.highest_bid > 0 ? "text-[var(--green)]" : "text-[var(--text-muted)]"}`}>
+              {listing.highest_bid > 0 ? formatCurrency(listing.highest_bid) : "No bids"}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-2 flex items-center justify-between text-[0.7rem] text-[var(--text-muted)]">
+          <span>Listed {formatDate(listing.listed_at)}</span>
+          {listing.end_time && isActive && (
+            <span className="text-[var(--amber)]">{timeUntil(listing.end_time)}</span>
+          )}
+          {listing.end_time && !isActive && (
+            <span>Ended {formatDate(listing.end_time)}</span>
+          )}
+        </div>
+
+        {isActive && (
+          <div className="mt-3">
+            <Link
+              href={`/events/${listing.event_id}`}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--accent)] py-2 text-xs font-medium text-white transition-all hover:bg-[var(--accent-hover)]"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+              View Listing
+            </Link>
+          </div>
+        )}
       </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div>
+        <h2 className="mb-1 text-xl font-semibold text-[var(--text-primary)]">My Listings</h2>
+        <p className="mb-6 text-sm text-[var(--text-muted)]">Tickets you have listed for sale</p>
+        <div className="flex flex-col gap-3">
+          {[1, 2].map((i) => (
+            <div key={i} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 animate-pulse">
+              <div className="h-4 w-48 rounded bg-[var(--bg-secondary)] mb-3" />
+              <div className="h-3 w-32 rounded bg-[var(--bg-secondary)] mb-2" />
+              <div className="h-12 rounded bg-[var(--bg-secondary)]" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="text-xl font-semibold text-[var(--text-primary)]">My Listings</h2>
+        <Link
+          href="/sell"
+          className="flex items-center gap-1.5 rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-[var(--accent-hover)]"
+        >
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+          List Ticket
+        </Link>
+      </div>
+      <p className="mb-6 text-sm text-[var(--text-muted)]">Tickets you have listed for sale</p>
+
+      {active.length === 0 && ended.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-[var(--border)] p-8 text-center">
+          <svg className="mx-auto h-10 w-10 text-[var(--text-muted)] mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+          </svg>
+          <p className="text-sm text-[var(--text-muted)] mb-1">No tickets listed yet</p>
+          <p className="text-xs text-[var(--text-muted)] mb-4">List a ticket and it will show up here.</p>
+          <Link
+            href="/sell"
+            className="inline-flex items-center gap-2 rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[var(--accent-hover)]"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+            List a Ticket
+          </Link>
+        </div>
+      ) : (
+        <>
+          {active.length > 0 && (
+            <div className="mb-8">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Active ({active.length})</h3>
+              <div className="flex flex-col gap-3">{active.map(renderListing)}</div>
+            </div>
+          )}
+          {ended.length > 0 && (
+            <div>
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Ended ({ended.length})</h3>
+              <div className="flex flex-col gap-3">{ended.map(renderListing)}</div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -480,71 +519,93 @@ function WalletSection() {
   );
 }
 
-// ─── Sidebar Nav ─────────────────────────────────────────────
-
-const TABS = [
-  {
-    id: "orders",
-    label: "Orders",
-    icon: (
-      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-      </svg>
-    ),
-    count: MOCK_ORDERS.length,
-  },
-  {
-    id: "sales",
-    label: "Sales",
-    icon: (
-      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    count: MOCK_SALES.length,
-  },
-  {
-    id: "bids",
-    label: "Bids",
-    icon: (
-      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-      </svg>
-    ),
-    count: MOCK_BIDS.length,
-  },
-  {
-    id: "offers",
-    label: "Offers",
-    icon: (
-      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
-      </svg>
-    ),
-    count: MOCK_OFFERS.length,
-  },
-  {
-    id: "wallet",
-    label: "Wallet",
-    icon: (
-      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-      </svg>
-    ),
-    count: null,
-  },
-];
-
 // ─── Main ────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState("orders");
+  const [activeTab, setActiveTab] = useState("offers");
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [listingsLoading, setListingsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchListings() {
+      try {
+        const res = await fetch("/api/tickets/listings");
+        const data = await res.json();
+        if (Array.isArray(data)) setListings(data);
+      } catch {
+        // silent
+      } finally {
+        setListingsLoading(false);
+      }
+    }
+    fetchListings();
+  }, []);
+
+  const activeListings = listings.filter((l) => {
+    if (l.auction_status === "completed" || l.auction_status === "sold") return false;
+    if (l.end_time && new Date(l.end_time).getTime() < Date.now()) return false;
+    return true;
+  });
+  const soldListings = listings.filter((l) => l.auction_status === "completed" || l.auction_status === "sold");
+
+  const TABS = [
+    {
+      id: "orders",
+      label: "Orders",
+      icon: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+        </svg>
+      ),
+      count: MOCK_ORDERS.length,
+    },
+    {
+      id: "offers",
+      label: "Listings",
+      icon: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+        </svg>
+      ),
+      count: listingsLoading ? null : activeListings.length,
+    },
+    {
+      id: "sales",
+      label: "Sales",
+      icon: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      count: soldListings.length,
+    },
+    {
+      id: "bids",
+      label: "Bids",
+      icon: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+      ),
+      count: MOCK_BIDS.length,
+    },
+    {
+      id: "wallet",
+      label: "Wallet",
+      icon: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        </svg>
+      ),
+      count: null,
+    },
+  ];
 
   const sections: Record<string, React.ReactNode> = {
     orders: <OrdersSection />,
-    sales: <SalesSection />,
+    offers: <OffersSection listings={listings} loading={listingsLoading} />,
+    sales: <SalesSection listings={listings} />,
     bids: <BidsSection />,
-    offers: <OffersSection />,
     wallet: <WalletSection />,
   };
 
@@ -552,7 +613,7 @@ export default function DashboardPage() {
     <div className="mx-auto max-w-7xl px-3 sm:px-6 py-6 sm:py-10">
       <div className="mb-5 sm:mb-8 fade-up">
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--text-primary)]">Dashboard</h1>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">Manage your tickets, bids, and payments</p>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">Manage your tickets, listings, and bids</p>
       </div>
 
       {/* Mobile tab bar */}

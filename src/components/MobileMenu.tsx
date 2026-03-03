@@ -20,7 +20,7 @@ export default function MobileMenu() {
 
       {/* Overlay */}
       {open && (
-        <div className="fixed inset-0 z-[60]" onClick={() => setOpen(false)}>
+        <div className="fixed inset-0 z-[9999]" onClick={() => setOpen(false)}>
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/50" />
           {/* Panel */}

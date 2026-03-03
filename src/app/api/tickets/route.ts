@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       ticket_type,
       reserve_price,
       buy_it_now_price,
-      auction_duration_days,
+      event_start_time,
       seller_name,
     } = body;
 
@@ -61,14 +61,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!reserve_price || reserve_price <= 0) {
+    if (!event_start_time) {
       return NextResponse.json(
-        { error: "reserve_price must be greater than 0" },
+        { error: "event_start_time is required to set auction end time" },
         { status: 400 }
       );
     }
 
-    if (buy_it_now_price && buy_it_now_price <= reserve_price) {
+    // Reserve is optional — defaults to 0 (no reserve)
+    const resolvedReserve = reserve_price && reserve_price > 0 ? reserve_price : 0;
+
+    if (buy_it_now_price && resolvedReserve > 0 && buy_it_now_price <= resolvedReserve) {
       return NextResponse.json(
         { error: "buy_it_now_price must be greater than reserve_price" },
         { status: 400 }
@@ -118,9 +121,9 @@ export async function POST(req: NextRequest) {
     const ticket = ticketRows[0];
     const ticketId = ticket.id;
 
-    // 2. Calculate auction end time
-    const durationDays = auction_duration_days || 7;
-    const endTime = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
+    // 2. Auction ends 2 hours before event start
+    const eventStart = new Date(event_start_time).getTime();
+    const endTime = new Date(eventStart - 2 * 60 * 60 * 1000).toISOString();
 
     // 3. Try to create auction state on AWS API
     let auctionCreatedOnAws = false;
@@ -131,7 +134,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           auction_item_id: ticketId,
           auction_status: "active",
-          reserve_price: reserve_price,
+          reserve_price: resolvedReserve,
           buy_it_now_price: buy_it_now_price || null,
           end_time: endTime,
         }),
@@ -149,7 +152,7 @@ export async function POST(req: NextRequest) {
       VALUES (
         ${ticketId}::uuid,
         'active',
-        ${reserve_price},
+        ${resolvedReserve},
         ${buy_it_now_price || null},
         ${endTime}::timestamptz
       )
@@ -169,7 +172,7 @@ export async function POST(req: NextRequest) {
       auction: {
         auction_item_id: ticketId,
         auction_status: "active",
-        reserve_price,
+        reserve_price: resolvedReserve,
         buy_it_now_price: buy_it_now_price || null,
         end_time: endTime,
         source: auctionCreatedOnAws ? "aws" : "local",

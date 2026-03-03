@@ -18,7 +18,6 @@ interface ListingData {
   ticketType: string;
   reservePrice: string;
   buyNowPrice: string;
-  auctionDays: string;
 }
 
 const INITIAL: ListingData = {
@@ -29,7 +28,6 @@ const INITIAL: ListingData = {
   ticketType: "",
   reservePrice: "",
   buyNowPrice: "",
-  auctionDays: "7",
 };
 
 function StepIndicator({ current, total }: { current: number; total: number }) {
@@ -184,7 +182,7 @@ export default function SellerPanel() {
     switch (step) {
       case 0: return !!data.event;
       case 1: return !!data.section && !!data.row && !!data.seat;
-      case 2: return !!data.reservePrice && parseFloat(data.reservePrice) > 0;
+      case 2: return true; // reserve and buy-now are both optional
       default: return true;
     }
   }
@@ -193,10 +191,10 @@ export default function SellerPanel() {
     setSubmitting(true);
     setError("");
 
-    const reservePrice = parseFloat(data.reservePrice);
+    const reservePrice = data.reservePrice ? parseFloat(data.reservePrice) : null;
     const buyNowPrice = data.buyNowPrice ? parseFloat(data.buyNowPrice) : null;
 
-    if (buyNowPrice !== null && buyNowPrice <= reservePrice) {
+    if (reservePrice !== null && buyNowPrice !== null && buyNowPrice <= reservePrice) {
       setError("Buy Now price must be higher than reserve price");
       setSubmitting(false);
       return;
@@ -214,7 +212,7 @@ export default function SellerPanel() {
           ticket_type: data.ticketType || null,
           reserve_price: reservePrice,
           buy_it_now_price: buyNowPrice,
-          auction_duration_days: parseInt(data.auctionDays) || 7,
+          event_start_time: data.event!.start_time,
           seller_name: "Seller",
         }),
       });
@@ -252,8 +250,9 @@ export default function SellerPanel() {
             Section {data.section} · Row {data.row} · Seat {data.seat}
           </p>
           <p className="text-xs text-[var(--text-muted)] mb-6">
-            Your auction is live for {data.auctionDays} days. Buyers can bid starting at ${parseFloat(data.reservePrice).toFixed(2)}
-            {data.buyNowPrice ? ` or buy now for $${parseFloat(data.buyNowPrice).toFixed(2)}` : ""}.
+            Your auction is live until 2 hours before the event.
+            {data.reservePrice ? ` Reserve price: ${parseFloat(data.reservePrice).toFixed(2)}.` : " No reserve — bidding starts at $0."}
+            {data.buyNowPrice ? ` Buy now for ${parseFloat(data.buyNowPrice).toFixed(2)}.` : ""}
           </p>
           <button
             onClick={resetForm}
@@ -362,7 +361,7 @@ export default function SellerPanel() {
           <div className="space-y-3">
             <div>
               <label className="mb-1 block text-xs text-[var(--text-secondary)]">
-                Starting Price (reserve) <span className="text-red-400">*</span>
+                Reserve Price <span className="text-[var(--text-muted)]">(optional)</span>
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-[var(--text-muted)]">$</span>
@@ -374,11 +373,11 @@ export default function SellerPanel() {
                     const v = e.target.value;
                     if (v === "" || /^\d*\.?\d{0,2}$/.test(v)) update({ reservePrice: v });
                   }}
-                  placeholder="50.00"
+                  placeholder="0.00"
                   className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] pl-7 pr-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--accent)]/40"
                 />
               </div>
-              <p className="mt-1 text-[0.65rem] text-[var(--text-muted)]">Bidding starts here. You won&apos;t sell below this price.</p>
+              <p className="mt-1 text-[0.65rem] text-[var(--text-muted)]">Minimum price to sell. Leave blank to start bidding at $0 with no reserve.</p>
             </div>
 
             <div>
@@ -402,20 +401,21 @@ export default function SellerPanel() {
               <p className="mt-1 text-[0.65rem] text-[var(--text-muted)]">Buyers can skip the auction and pay this price instantly.</p>
             </div>
 
-            <div>
-              <label className="mb-1 block text-xs text-[var(--text-secondary)]">Auction Duration</label>
-              <select
-                value={data.auctionDays}
-                onChange={(e) => update({ auctionDays: e.target.value })}
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]/40"
-              >
-                <option value="1">1 day</option>
-                <option value="3">3 days</option>
-                <option value="5">5 days</option>
-                <option value="7">7 days</option>
-                <option value="10">10 days</option>
-                <option value="14">14 days</option>
-              </select>
+            {/* Auction timing info */}
+            <div className="rounded-lg bg-[var(--bg-secondary)] p-3">
+              <div className="flex items-start gap-2">
+                <svg className="h-4 w-4 text-[var(--text-muted)] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="text-xs font-medium text-[var(--text-secondary)]">Auction ends 2 hours before event</p>
+                  <p className="text-[0.65rem] text-[var(--text-muted)] mt-0.5">
+                    {data.event?.start_time
+                      ? `Bidding closes ${new Date(new Date(data.event.start_time).getTime() - 2 * 60 * 60 * 1000).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}`
+                      : "Based on the event start time"}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -446,8 +446,10 @@ export default function SellerPanel() {
             </div>
             <div className="px-4 py-3 flex items-center justify-between">
               <div>
-                <p className="text-xs text-[var(--text-muted)]">Starting Price</p>
-                <p className="text-lg font-bold text-[var(--green)]">${parseFloat(data.reservePrice).toFixed(2)}</p>
+                <p className="text-xs text-[var(--text-muted)]">Reserve</p>
+                <p className="text-lg font-bold text-[var(--green)]">
+                  {data.reservePrice ? `${parseFloat(data.reservePrice).toFixed(2)}` : "No reserve"}
+                </p>
               </div>
               {data.buyNowPrice && (
                 <div className="text-right">
@@ -457,8 +459,15 @@ export default function SellerPanel() {
               )}
             </div>
             <div className="px-4 py-3">
-              <p className="text-xs text-[var(--text-muted)]">Auction Duration</p>
-              <p className="text-sm font-medium text-[var(--text-primary)]">{data.auctionDays} days</p>
+              <p className="text-xs text-[var(--text-muted)]">Auction Ends</p>
+              <p className="text-sm font-medium text-[var(--text-primary)]">
+                {data.event?.start_time
+                  ? new Date(new Date(data.event.start_time).getTime() - 2 * 60 * 60 * 1000).toLocaleDateString("en-US", {
+                      weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"
+                    })
+                  : "2 hours before event"}
+              </p>
+              <p className="text-[0.65rem] text-[var(--text-muted)] mt-0.5">2 hours before event start</p>
             </div>
           </div>
 

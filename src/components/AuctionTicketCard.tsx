@@ -120,53 +120,67 @@ export default function AuctionTicketCard({
   }
 
   return (
-    <div className={`rounded-lg border bg-[var(--bg-secondary)] p-4 transition-all ${selected ? 'border-[var(--accent)] ring-1 ring-[var(--accent)]/30' : expanded ? 'border-[var(--accent)]/40' : 'border-[var(--border)] hover:border-[var(--border-hover)]'}`}>
-      {/* Top row: seat info + countdown + current bid + buy now */}
+    <div
+      className={`rounded-xl border bg-[var(--bg-secondary)] p-3 sm:p-4 transition-all ${
+        selected
+          ? "border-[var(--accent)] ring-1 ring-[var(--accent)]/30"
+          : expanded
+          ? "border-[var(--accent)]/40"
+          : "border-[var(--border)] hover:border-[var(--border-hover)]"
+      }`}
+    >
+      {/* Clickable area */}
       <div
-        className="flex items-center justify-between cursor-pointer"
+        className="cursor-pointer"
         onClick={() => {
           setExpanded(!expanded);
           onSelect?.(ticketId);
         }}
       >
-        <div className="flex-shrink-0">
-          <p className="text-sm font-medium text-[var(--text-primary)]">
-            Section {section} · Row {row} · Seat {seat}
-          </p>
-          {ticketType && (
-            <p className="text-xs text-[var(--text-muted)]">{ticketType}</p>
-          )}
+        {/* Row 1: Seat info + current bid */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[var(--text-primary)]">
+              Section {section} · Row {row} · Seat {seat}
+            </p>
+            {ticketType && (
+              <p className="text-xs text-[var(--text-muted)] mt-0.5">{ticketType}</p>
+            )}
+          </div>
+          <div className="text-right flex-shrink-0">
+            <p className="text-[0.6rem] uppercase tracking-wider text-[var(--text-muted)]">
+              {hasBids ? "Current bid" : "No bids"}
+            </p>
+            <p className="text-lg font-bold text-[var(--text-primary)]">
+              ${displayBid.toFixed(2)}
+            </p>
+          </div>
         </div>
 
-        {/* Auction countdown — center */}
+        {/* Row 2: Countdown */}
         {auctionEndTime && (
-          <div className="flex-1 flex justify-center">
+          <div className="mt-2">
             <Countdown endTime={auctionEndTime} label="Auction ends in" compact />
           </div>
         )}
 
-        <div className="text-center px-4 flex-shrink-0">
-          <p className="text-[0.6rem] uppercase tracking-wider text-[var(--text-muted)]">
-            {hasBids ? "Current bid" : "No bids"}
-          </p>
-          <p className="text-lg font-bold text-[var(--text-primary)]">
-            ${displayBid.toFixed(2)}
-          </p>
-        </div>
-
+        {/* Row 3: Buy Now button — full width on mobile */}
         {buyItNowPrice && !expired && (
           <button
-            onClick={(e) => { e.stopPropagation(); handleBuyNow(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleBuyNow();
+            }}
             disabled={checkoutLoading}
-            className="flex-shrink-0 rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-[var(--accent-hover)] disabled:opacity-50"
+            className="mt-3 w-full rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[var(--accent-hover)] disabled:opacity-50 sm:w-auto"
           >
             {checkoutLoading ? (
-              <svg className="h-4 w-4 animate-spin mx-2" viewBox="0 0 24 24" fill="none">
+              <svg className="h-4 w-4 animate-spin mx-auto" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
             ) : (
-              `Buy Now · ${buyItNowPrice.toFixed(2)}`
+              `Buy Now · $${buyItNowPrice.toFixed(2)}`
             )}
           </button>
         )}
@@ -174,9 +188,22 @@ export default function AuctionTicketCard({
 
       {/* Bid input row */}
       {auctionId && !expired && (
-        <div className="mt-3 flex items-center gap-2 border-t border-[var(--border)] pt-3" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="mt-3 flex items-center gap-2 border-t border-[var(--border)] pt-3"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="relative flex-1">
-            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} className="text-sm font-medium text-[var(--text-muted)] pointer-events-none select-none">$</span>
+            <span
+              style={{
+                position: "absolute",
+                left: "12px",
+                top: "50%",
+                transform: "translateY(-50%)",
+              }}
+              className="text-sm font-medium text-[var(--text-muted)] pointer-events-none select-none"
+            >
+              $
+            </span>
             <input
               type="text"
               inputMode="decimal"
@@ -191,14 +218,14 @@ export default function AuctionTicketCard({
               }}
               onKeyDown={(e) => e.key === "Enter" && handlePlaceBid()}
               placeholder={`Min ${getMinBid(displayBid).toFixed(2)}`}
-              style={{ paddingLeft: '28px' }}
+              style={{ paddingLeft: "28px" }}
               className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-card)] py-2 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none"
             />
           </div>
           <button
             onClick={handlePlaceBid}
             disabled={bidLoading || !bidInput}
-            className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-all hover:border-[var(--border-hover)] hover:text-[var(--text-primary)] disabled:opacity-50"
+            className="flex-shrink-0 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-all hover:border-[var(--border-hover)] hover:text-[var(--text-primary)] disabled:opacity-50"
           >
             {bidLoading ? "..." : "Place Bid"}
           </button>
@@ -206,9 +233,7 @@ export default function AuctionTicketCard({
       )}
 
       {/* Feedback */}
-      {bidError && (
-        <p className="mt-2 text-xs text-red-500">{bidError}</p>
-      )}
+      {bidError && <p className="mt-2 text-xs text-red-500">{bidError}</p>}
       {bidSuccess && (
         <p className="mt-2 text-xs text-[var(--green)]">{bidSuccess}</p>
       )}

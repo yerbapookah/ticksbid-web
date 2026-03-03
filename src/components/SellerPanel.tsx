@@ -10,7 +10,7 @@ interface EventResult {
   thumbnail_url?: string;
 }
 
-type AuctionEnd = "max" | "1d" | "3d" | "7d" | "14d" | "30d";
+type AuctionEnd = "max" | "1d" | "3d" | "7d" | "14d" | "30d" | "custom";
 
 interface ListingData {
   event: EventResult | null;
@@ -21,6 +21,7 @@ interface ListingData {
   reservePrice: string;
   buyNowPrice: string;
   auctionEnd: AuctionEnd;
+  customEndTime: string;
 }
 
 const INITIAL: ListingData = {
@@ -32,6 +33,7 @@ const INITIAL: ListingData = {
   reservePrice: "",
   buyNowPrice: "",
   auctionEnd: "max",
+  customEndTime: "",
 };
 
 const AUCTION_END_LABELS: Record<AuctionEnd, string> = {
@@ -41,10 +43,21 @@ const AUCTION_END_LABELS: Record<AuctionEnd, string> = {
   "14d": "2 weeks",
   "30d": "30 days",
   "max": "Up to event",
+  "custom": "Custom",
 };
 
-function computeEndTime(auctionEnd: AuctionEnd, eventStartTime: string): string {
+function computeEndTime(auctionEnd: AuctionEnd, eventStartTime: string, customEndTime?: string): string {
   const maxEnd = new Date(new Date(eventStartTime).getTime() - 2 * 60 * 60 * 1000);
+
+  if (auctionEnd === "custom" && customEndTime) {
+    const custom = new Date(customEndTime);
+    // Clamp to [1hr from now, 2hrs before event]
+    const minEnd = new Date(Date.now() + 60 * 60 * 1000);
+    if (custom < minEnd) return minEnd.toISOString();
+    if (custom > maxEnd) return maxEnd.toISOString();
+    return custom.toISOString();
+  }
+
   if (auctionEnd === "max") return maxEnd.toISOString();
 
   const daysMap: Record<string, number> = { "1d": 1, "3d": 3, "7d": 7, "14d": 14, "30d": 30 };
@@ -53,6 +66,21 @@ function computeEndTime(auctionEnd: AuctionEnd, eventStartTime: string): string 
 
   // Cap at 2hrs before event
   return fromNow < maxEnd ? fromNow.toISOString() : maxEnd.toISOString();
+}
+
+function toLocalDatetimeValue(iso: string): string {
+  const d = new Date(iso);
+  const offset = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - offset * 60 * 1000);
+  return local.toISOString().slice(0, 16);
+}
+
+function getMinDatetime(): string {
+  return toLocalDatetimeValue(new Date(Date.now() + 60 * 60 * 1000).toISOString());
+}
+
+function getMaxDatetime(eventStartTime: string): string {
+  return toLocalDatetimeValue(new Date(new Date(eventStartTime).getTime() - 2 * 60 * 60 * 1000).toISOString());
 }
 
 function StepIndicator({ current, total }: { current: number; total: number }) {
@@ -207,7 +235,7 @@ export default function SellerPanel() {
     switch (step) {
       case 0: return !!data.event;
       case 1: return !!data.section && !!data.row && !!data.seat;
-      case 2: return true; // reserve and buy-now are both optional
+      case 2: return data.auctionEnd !== "custom" || !!data.customEndTime;
       default: return true;
     }
   }
@@ -226,7 +254,7 @@ export default function SellerPanel() {
     }
 
     try {
-      const endTime = computeEndTime(data.auctionEnd, data.event!.start_time);
+      const endTime = computeEndTime(data.auctionEnd, data.event!.start_time, data.customEndTime);
 
       const res = await fetch("/api/tickets", {
         method: "POST",
@@ -277,7 +305,7 @@ export default function SellerPanel() {
             Section {data.section} · Row {data.row} · Seat {data.seat}
           </p>
           <p className="text-xs text-[var(--text-muted)] mb-6">
-            Your auction is live{data.event?.start_time ? ` until ${new Date(computeEndTime(data.auctionEnd, data.event.start_time)).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : ""}.
+            Your auction is live{data.event?.start_time ? ` until ${new Date(computeEndTime(data.auctionEnd, data.event.start_time, data.customEndTime)).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : ""}.
             {data.reservePrice ? ` Reserve: ${parseFloat(data.reservePrice).toFixed(2)}.` : " No reserve — bidding starts at $0."}
             {data.buyNowPrice ? ` Buy now: ${parseFloat(data.buyNowPrice).toFixed(2)}.` : ""}
           </p>
@@ -441,12 +469,26 @@ export default function SellerPanel() {
                   <option key={key} value={key}>{AUCTION_END_LABELS[key]}</option>
                 ))}
               </select>
-              {data.event?.start_time && (
+              {data.auctionEnd === "custom" && data.event?.start_time && (
+                <div className="mt-2">
+                  <input
+                    type="datetime-local"
+                    value={data.customEndTime}
+                    onChange={(e) => update({ customEndTime: e.target.value })}
+                    min={getMinDatetime()}
+                    max={getMaxDatetime(data.event.start_time)}
+                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]/40"
+                  />
+                  <p className="mt-1 text-[0.65rem] text-[var(--text-muted)]">
+                    Min: 1 hour from now · Max: 2 hours before event
+                  </p>
+                </div>
+              )}
+              {data.event?.start_time && (data.auctionEnd !== "custom" || data.customEndTime) && (
                 <p className="mt-1 text-[0.65rem] text-[var(--text-muted)]">
-                  Closes {new Date(computeEndTime(data.auctionEnd, data.event.start_time)).toLocaleDateString("en-US", {
+                  Closes {new Date(computeEndTime(data.auctionEnd, data.event.start_time, data.customEndTime)).toLocaleDateString("en-US", {
                     weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"
                   })}
-                  {data.auctionEnd !== "max" && " (capped at 2hrs before event)"}
                 </p>
               )}
             </div>
@@ -495,13 +537,13 @@ export default function SellerPanel() {
               <p className="text-xs text-[var(--text-muted)]">Auction Ends</p>
               <p className="text-sm font-medium text-[var(--text-primary)]">
                 {data.event?.start_time
-                  ? new Date(computeEndTime(data.auctionEnd, data.event.start_time)).toLocaleDateString("en-US", {
+                  ? new Date(computeEndTime(data.auctionEnd, data.event.start_time, data.customEndTime)).toLocaleDateString("en-US", {
                       weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"
                     })
                   : "—"}
               </p>
               <p className="text-[0.65rem] text-[var(--text-muted)] mt-0.5">
-                {data.auctionEnd === "max" ? "Maximum — 2hrs before event" : `${AUCTION_END_LABELS[data.auctionEnd]} from now`}
+                {data.auctionEnd === "max" ? "Maximum — 2hrs before event" : data.auctionEnd === "custom" ? "Custom end time" : `${AUCTION_END_LABELS[data.auctionEnd]} from now`}
               </p>
             </div>
           </div>

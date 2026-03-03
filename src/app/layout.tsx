@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { AuthProvider } from "@/lib/auth";
 import HeaderAuth from "@/components/HeaderAuth";
@@ -8,6 +8,12 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "TicksBid — Secondary Ticket Marketplace",
   description: "Buy and sell event tickets with zero buyer fees. Built for humans and their agents.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 function Logo({ size = 32 }: { size?: number }) {

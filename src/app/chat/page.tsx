@@ -141,12 +141,8 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
 
   async function sendMessage(text: string) {
     if (!text.trim() || loading) return;
@@ -249,7 +245,6 @@ export default function ChatPage() {
             <MessageBubble key={i} msg={msg} />
           ))}
           {loading && <TypingIndicator />}
-          <div ref={messagesEndRef} />
 
           {/* Input below messages */}
           <div className="mt-4 mb-8">

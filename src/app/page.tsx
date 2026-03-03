@@ -1,5 +1,4 @@
-import { searchEvents, EventSummary } from "@/lib/api";
-import { getTicketCountsByEvent } from "@/lib/db";
+import { searchEvents, getTicketCountsByEvent, type EventSummary } from "@/lib/data";
 import Link from "next/link";
 
 function EventTypeBadge({ type }: { type: string }) {
@@ -79,14 +78,14 @@ function HeroBanner() {
       <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)]/8 via-transparent to-purple-900/5" />
       <div className="absolute -right-40 -top-40 h-96 w-96 rounded-full bg-[var(--accent)]/5 blur-3xl" />
       <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-purple-800/5 blur-3xl" />
-      <div className="relative mx-auto max-w-7xl px-6 py-20">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: '3rem', alignItems: 'center' }}>
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-20">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] lg:grid-cols-[1fr_420px] gap-8 md:gap-12 items-center">
           <div>
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--accent)]/20 bg-[var(--accent)]/5 px-4 py-1.5">
               <div className="h-1.5 w-1.5 rounded-full bg-[var(--green)] animate-pulse" />
               <span className="text-xs font-medium text-[var(--accent-hover)]">Zero buyer fees — always</span>
             </div>
-            <h1 className="mb-4 text-4xl font-bold tracking-tight text-[var(--text-primary)] md:text-5xl">
+            <h1 className="mb-4 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl md:text-5xl">
               Tickets for humans<br />
               <span className="text-[var(--text-muted)]">and their agents</span>
             </h1>
@@ -164,21 +163,21 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
   return (
     <>
       <HeroBanner />
-      <div className="mx-auto max-w-7xl px-6 py-12">
-        <div className="mb-8 flex items-center justify-between">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-12">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold text-[var(--text-primary)]">
               {query ? `Results for "${query}"` : "All Events"}
             </h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">{events.length} event{events.length !== 1 ? "s" : ""} found</p>
           </div>
-          <div className="hidden items-center gap-2 md:flex">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
             {["All", "Concert", "Sports", "Theater", "Comedy", "Festival"].map((t) => {
               const val = t === "All" ? "" : t.toLowerCase();
               const active = eventType === val;
               return (
                 <Link key={t} href={`/?${new URLSearchParams({ ...(query ? { q: query } : {}), ...(val ? { type: val } : {}) }).toString()}`}
-                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${active ? "bg-[var(--accent)] text-white" : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--border-hover)] hover:text-[var(--text-primary)]"}`}>
+                  className={`flex-shrink-0 rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all ${active ? "bg-[var(--accent)] text-white" : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--border-hover)] hover:text-[var(--text-primary)]"}`}>
                   {t}
                 </Link>
               );

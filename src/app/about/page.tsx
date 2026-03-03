@@ -37,7 +37,7 @@ export default function AboutPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)]/8 via-transparent to-purple-900/5" />
         <div className="absolute -right-40 -top-40 h-96 w-96 rounded-full bg-[var(--accent)]/5 blur-3xl" />
         <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-purple-800/5 blur-3xl" />
-        <div className="relative mx-auto max-w-7xl px-6 py-20 fade-up">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-20 fade-up">
           <div className="max-w-2xl">
             <h1 className="mb-4 text-4xl font-bold tracking-tight text-[var(--text-primary)] md:text-5xl">
               A ticket marketplace<br />
@@ -50,7 +50,7 @@ export default function AboutPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
 
         {/* Zero Buyer Fees */}
         <section className="py-16 fade-up">

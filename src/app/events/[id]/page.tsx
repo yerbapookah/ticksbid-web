@@ -1,5 +1,4 @@
-import { getEvent } from "@/lib/api";
-import { getTicketsWithAuctions, TicketWithAuction } from "@/lib/db";
+import { getEvent, getTicketsWithAuctions, type TicketWithAuction } from "@/lib/data";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import EventTicketsView from "@/components/EventTicketsView";
@@ -69,7 +68,7 @@ export default async function EventDetailPage({
   const eventStartTime = event.start_time;
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8">
       {/* Top bar: back + event name + badge */}
       <div className="mb-6 fade-up">
         <Link
@@ -91,7 +90,7 @@ export default async function EventDetailPage({
       </div>
 
       {/* Main grid: tickets center, event info right */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '2rem' }}>
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] gap-6 md:gap-8">
 
         {/* CENTER: Tickets */}
         <div className="fade-up" style={{ animationDelay: "100ms" }}>
@@ -141,7 +140,7 @@ export default async function EventDetailPage({
 
         {/* RIGHT: Event info sidebar */}
         <div className="fade-up" style={{ animationDelay: "150ms" }}>
-          <div className="sticky top-24 flex flex-col gap-4">
+          <div className="md:sticky md:top-24 flex flex-col gap-4">
 
             {/* Thumbnail */}
             {event.thumbnail_url && (

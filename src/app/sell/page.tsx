@@ -9,7 +9,7 @@ const FEE_TIERS = [
 
 export default function SellPage() {
   return (
-    <div className="mx-auto max-w-7xl px-6 py-16">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 sm:py-16">
       <div className="mb-12 max-w-2xl">
         <h1 className="mb-2 text-3xl font-bold tracking-tight text-[var(--text-primary)]">
           Sell Tickets

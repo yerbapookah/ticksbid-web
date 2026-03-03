@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { TOOLS, executeTool } from "@/lib/tools";
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const MCP_SERVER_URL = process.env.TICKSBID_MCP_URL || "http://localhost:8099/sse";
 
 const SYSTEM_PROMPT = `You are TicksBid AI, a helpful ticket buying assistant for the TicksBid secondary ticket marketplace. You help users find and purchase event tickets.
 
@@ -24,46 +22,18 @@ When a user wants to buy or bid:
 
 Format prices as USD. Keep responses concise but informative.`;
 
-// Connect to MCP server and get available tools
-async function getMcpClient(): Promise<Client> {
-  const transport = new SSEClientTransport(new URL(MCP_SERVER_URL));
-  const client = new Client({ name: "ticksbid-chat", version: "1.0.0" });
-  await client.connect(transport);
-  return client;
-}
-
-// Convert MCP tool schema to Anthropic tool format
-function mcpToolToAnthropic(tool: { name: string; description?: string; inputSchema?: Record<string, unknown> }) {
-  return {
-    name: tool.name,
-    description: tool.description || "",
-    input_schema: tool.inputSchema || { type: "object" as const, properties: {} },
-  };
-}
-
 export async function POST(req: NextRequest) {
   if (!ANTHROPIC_API_KEY) {
-    return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
+    return NextResponse.json(
+      { error: "ANTHROPIC_API_KEY not configured" },
+      { status: 500 }
+    );
   }
 
   const { messages } = await req.json();
-  let mcpClient: Client | null = null;
 
   try {
-    // 1. Connect to MCP server
-    console.log(`MCP: Connecting to ${MCP_SERVER_URL}`);
-    mcpClient = await getMcpClient();
-
-    // 2. List available tools from MCP server
-    const toolsResult = await mcpClient.listTools();
-    const mcpTools = toolsResult.tools || [];
-
-    // Convert to Anthropic format
-    const anthropicTools = mcpTools.map(mcpToolToAnthropic);
-
-    console.log(`MCP: Loaded ${anthropicTools.length} tools: ${anthropicTools.map(t => t.name).join(", ")}`);
-
-    // 3. Send to Anthropic API with tool definitions
+    // 1. Initial call to Anthropic with tool definitions
     let response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -75,7 +45,7 @@ export async function POST(req: NextRequest) {
         model: "claude-sonnet-4-20250514",
         max_tokens: 4096,
         system: SYSTEM_PROMPT,
-        tools: anthropicTools,
+        tools: TOOLS,
         messages,
       }),
     });
@@ -90,53 +60,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Tool use loop — execute tools via MCP server
+    // 2. Tool-use loop
     const allMessages = [...messages];
     let iterations = 0;
     const MAX_ITERATIONS = 8;
 
     while (data.stop_reason === "tool_use" && iterations < MAX_ITERATIONS) {
       iterations++;
-
-      // Add assistant message with tool use blocks
       allMessages.push({ role: "assistant", content: data.content });
 
-      // Execute each tool call via MCP
       const toolResults = [];
       for (const block of data.content) {
         if (block.type === "tool_use") {
-          console.log(`MCP: Calling tool "${block.name}" with:`, JSON.stringify(block.input));
+          console.log(`Tool: "${block.name}" input:`, JSON.stringify(block.input));
 
+          let resultText: string;
           try {
-            const result = await mcpClient.callTool({
-              name: block.name,
-              arguments: block.input,
-            });
-
-            // Extract text from MCP result
-            const resultText = (result.content as Array<{ type: string; text?: string }>)
-              ?.map((c) => c.text || "")
-              .join("\n") || "No result";
-
-            console.log(`MCP: Tool "${block.name}" returned ${resultText.length} chars`);
-
-            toolResults.push({
-              type: "tool_result",
-              tool_use_id: block.id,
-              content: resultText,
-            });
+            resultText = await executeTool(block.name, block.input);
           } catch (err) {
-            console.error(`MCP: Tool "${block.name}" error:`, err);
-            toolResults.push({
-              type: "tool_result",
-              tool_use_id: block.id,
-              content: `Tool error: ${err instanceof Error ? err.message : "Unknown error"}`,
-            });
+            resultText = `Tool error: ${err instanceof Error ? err.message : "Unknown error"}`;
           }
+
+          console.log(`Tool: "${block.name}" returned ${resultText.length} chars`);
+          toolResults.push({
+            type: "tool_result",
+            tool_use_id: block.id,
+            content: resultText,
+          });
         }
       }
 
-      // Add tool results and call Anthropic again
       allMessages.push({ role: "user", content: toolResults });
 
       response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -150,7 +103,7 @@ export async function POST(req: NextRequest) {
           model: "claude-sonnet-4-20250514",
           max_tokens: 4096,
           system: SYSTEM_PROMPT,
-          tools: anthropicTools,
+          tools: TOOLS,
           messages: allMessages,
         }),
       });
@@ -158,25 +111,17 @@ export async function POST(req: NextRequest) {
       data = await response.json();
     }
 
-    // 5. Extract final text response
-    const textContent = (data.content || [])
-      .filter((b: { type: string }) => b.type === "text")
-      .map((b: { text: string }) => b.text)
-      .join("\n") || "I couldn't generate a response.";
+    // 3. Extract final text
+    const textContent =
+      (data.content || [])
+        .filter((b: { type: string }) => b.type === "text")
+        .map((b: { text: string }) => b.text)
+        .join("\n") || "I couldn't generate a response.";
 
     return NextResponse.json({ response: textContent });
-
   } catch (err) {
     console.error("Chat API error:", err);
     const errMsg = err instanceof Error ? err.message : String(err);
-    return NextResponse.json(
-      { error: `${errMsg} (MCP URL: ${MCP_SERVER_URL})` },
-      { status: 500 }
-    );
-  } finally {
-    // Clean up MCP connection
-    if (mcpClient) {
-      try { await mcpClient.close(); } catch {}
-    }
+    return NextResponse.json({ error: errMsg }, { status: 500 });
   }
 }

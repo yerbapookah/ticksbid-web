@@ -560,15 +560,37 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-10">
-      <div className="mb-8 fade-up">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-10">
+      <div className="mb-6 sm:mb-8 fade-up">
         <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">Dashboard</h1>
         <p className="mt-1 text-sm text-[var(--text-muted)]">Manage your tickets, bids, and payments</p>
       </div>
 
+      {/* Mobile tab bar */}
+      <div className="mb-6 flex gap-1 overflow-x-auto pb-1 scrollbar-hide md:hidden fade-up" style={{ animationDelay: "60ms" }}>
+        {TABS.map((tab) => {
+          const active = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex flex-shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all ${
+                active
+                  ? "bg-[var(--accent)]/10 text-[var(--accent-hover)]"
+                  : "border border-[var(--border)] text-[var(--text-secondary)]"
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+              {tab.count !== null && <span className="text-[0.65rem]">({tab.count})</span>}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="flex gap-8">
-        {/* Sidebar */}
-        <nav className="w-52 flex-shrink-0 fade-up" style={{ animationDelay: "60ms" }}>
+        {/* Sidebar — desktop only */}
+        <nav className="hidden md:block w-52 flex-shrink-0 fade-up" style={{ animationDelay: "60ms" }}>
           <div className="sticky top-24 flex flex-col gap-1">
             {TABS.map((tab) => {
               const active = activeTab === tab.id;

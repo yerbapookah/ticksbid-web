@@ -211,7 +211,7 @@ function CategoryCard({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-4 rounded-xl border p-4 text-left transition-all ${
+      className={`flex flex-shrink-0 items-center gap-4 rounded-xl border p-4 text-left transition-all lg:flex-shrink ${
         isActive
           ? "border-[var(--accent)]/40 bg-[var(--accent)]/5"
           : "border-[var(--border)] bg-[var(--bg-card)] hover:border-[var(--border-hover)]"
@@ -266,7 +266,7 @@ export default function HelpPage() {
       {/* Hero */}
       <div className="relative overflow-hidden border-b border-[var(--border)] bg-[var(--bg-secondary)]">
         <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)]/8 via-transparent to-purple-900/5" />
-        <div className="relative mx-auto max-w-7xl px-6 py-16 fade-up">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-16 fade-up">
           <div className="mx-auto max-w-xl text-center">
             <h1 className="mb-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] md:text-4xl">
               Help Center
@@ -307,7 +307,7 @@ export default function HelpPage() {
 
       {/* Contact Support — prominent */}
       <div className="border-b border-[var(--border)] bg-[var(--bg-primary)]">
-        <div className="mx-auto max-w-7xl px-6 py-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-10">
           <div className="mb-6 text-center">
             <h2 className="text-lg font-semibold text-[var(--text-primary)]">Get help from our team</h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">Can&apos;t find what you&apos;re looking for? Reach out directly.</p>
@@ -349,7 +349,7 @@ export default function HelpPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-6 py-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-12">
         {/* Search results */}
         {filteredArticles ? (
           <div className="fade-up">
@@ -392,9 +392,9 @@ export default function HelpPage() {
         ) : (
           /* Category browser */
           <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
-            {/* Left: categories */}
+            {/* Left: categories — scrollable on mobile, sidebar on desktop */}
             <div className="fade-up">
-              <div className="sticky top-24 flex flex-col gap-2">
+              <div className="lg:sticky lg:top-24 flex lg:flex-col gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
                 {CATEGORIES.map((cat) => (
                   <CategoryCard
                     key={cat.id}

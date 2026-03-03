@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTicketsWithAuctions } from "@/lib/db";
+import { getTicketsWithAuctions } from "@/lib/data";
 
 export async function GET(req: NextRequest) {
   const eventId = req.nextUrl.searchParams.get("event_id");

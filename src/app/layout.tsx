@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AuthProvider } from "@/lib/auth";
 import HeaderAuth from "@/components/HeaderAuth";
+import MobileMenu from "@/components/MobileMenu";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -37,7 +38,7 @@ function Logo({ size = 32 }: { size?: number }) {
 function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg-primary)]/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-6">
+      <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6 md:gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
           <Logo size={32} />
@@ -47,7 +48,7 @@ function Header() {
         </Link>
 
         {/* Search bar */}
-        <form action="/" method="GET" className="flex-1 max-w-xl">
+        <form action="/" method="GET" className="flex-1 max-w-xl min-w-0">
           <div className="flex items-center rounded-lg border border-[var(--border)] bg-[var(--bg-card)] focus-within:border-[var(--accent)]/40 transition-colors">
             <div className="flex items-center pl-3 text-[var(--text-muted)]">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -57,14 +58,14 @@ function Header() {
             <input
               type="text"
               name="q"
-              placeholder="Search by artist, event, date, location, or venue"
-              className="flex-1 bg-transparent px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none"
+              placeholder="Search events..."
+              className="flex-1 bg-transparent px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none min-w-0"
             />
           </div>
         </form>
 
-        {/* Right: nav + auth */}
-        <div className="ml-auto flex items-center gap-1">
+        {/* Right: nav + auth + mobile menu */}
+        <div className="ml-auto flex items-center gap-1 flex-shrink-0">
           <nav className="hidden items-center md:flex">
             <Link href="/chat" className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-purple-400 transition-colors hover:text-purple-300 hover:bg-purple-500/10">
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>
@@ -84,7 +85,10 @@ function Header() {
             </Link>
           </nav>
 
-          <HeaderAuth />
+          <div className="hidden md:block">
+            <HeaderAuth />
+          </div>
+          <MobileMenu />
         </div>
       </div>
     </header>
@@ -97,11 +101,11 @@ function Footer() {
       {/* Accent glow along top */}
       <div className="h-px bg-gradient-to-r from-transparent via-[var(--accent)]/30 to-transparent" />
 
-      <div className="mx-auto max-w-7xl px-6 pt-14 pb-10">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-14 pb-10">
         {/* Top row: tagline left, columns + icons right */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 160px 160px 160px 60px', gap: '0', alignItems: 'start' }}>
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-2 md:grid-cols-[1fr_160px_160px_60px] lg:grid-cols-[1fr_160px_160px_160px_60px]">
           {/* Tagline + logo */}
-          <div className="flex flex-col gap-5 pr-8">
+          <div className="flex flex-col gap-5 col-span-2 md:col-span-1">
             <p className="text-2xl font-bold leading-snug text-[var(--text-primary)]">
               Stop overpaying.<br />Start bidding.
             </p>
@@ -130,11 +134,11 @@ function Footer() {
             <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">TikTok</a>
           </div>
 
-          {/* Spacer */}
-          <div />
+          {/* Spacer — hidden on smaller screens */}
+          <div className="hidden lg:block" />
 
-          {/* Large social icons — pinned right */}
-          <div className="flex flex-col items-end gap-3">
+          {/* Large social icons */}
+          <div className="flex md:flex-col items-center md:items-end gap-3 col-span-2 md:col-span-1">
             <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--accent)]/30 bg-[var(--accent)]/10 text-[var(--accent)] transition-all hover:bg-[var(--accent)]/20 hover:border-[var(--accent)]/50">
               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919C8.416 2.175 8.796 2.163 12 2.163zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12s.014 3.668.072 4.948c.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24s3.668-.014 4.948-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948s-.014-3.667-.072-4.947c-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
             </a>

@@ -201,8 +201,8 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
                 strokeDasharray="4 4"
                 strokeWidth={1}
                 label={{
-                  value: `Reserve $${reserve}`,
-                  position: "insideTopRight",
+                  value: `Reserve ${reserve}`,
+                  position: "insideTopLeft",
                   fill: "var(--amber)",
                   fontSize: 10,
                 }}

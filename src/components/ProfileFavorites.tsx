@@ -40,30 +40,17 @@ export default function ProfileFavorites() {
 
     async function fetchEvents() {
       setLoading(true);
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://p1xy94s1ni.execute-api.us-east-1.amazonaws.com/dev";
-      const fetched: FavEvent[] = [];
-
-      await Promise.all(
-        favorites.map(async (id) => {
-          try {
-            const res = await fetch(`${API_BASE}/events/${id}`);
-            if (res.ok) {
-              const ev = await res.json();
-              fetched.push({
-                id: ev.id,
-                name: ev.name,
-                event_type: ev.event_type || "event",
-                start_time: ev.start_time || "",
-                thumbnail_url: ev.thumbnail_url,
-              });
-            }
-          } catch {
-            // skip
-          }
-        })
-      );
-
-      setEvents(fetched);
+      try {
+        const res = await fetch("/api/events/details", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: favorites }),
+        });
+        const data = await res.json();
+        setEvents(Array.isArray(data) ? data : []);
+      } catch {
+        setEvents([]);
+      }
       setLoading(false);
     }
 

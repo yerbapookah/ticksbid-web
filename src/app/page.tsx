@@ -106,7 +106,7 @@ function HeroBanner() {
 
           {/* How it works */}
           <div className="flex flex-col gap-2 sm:gap-3">
-            <h2 style={{ transform: 'skewX(-8deg)' }} className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-[var(--text-primary)] mb-1 sm:mb-2">Three ways to buy</h2>
+            <h2 style={{ transform: 'skewX(-8deg)' }} className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-[var(--text-primary)] mb-1 sm:mb-2">Four ways to buy</h2>
             <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-3 sm:p-4">
               <div className="flex items-center gap-3 mb-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)]/10">
@@ -133,6 +133,15 @@ function HeroBanner() {
                 <span className="text-sm font-semibold text-[var(--text-primary)]">Tell TicksBid's AI What You Want</span>
               </div>
               <p className="text-xs text-[var(--text-muted)] leading-relaxed">Describe in chat the tickets that you want: event type, your budget, locations, number of seats. Let TicksBid buy on your behalf — on your terms.</p>
+            </div>
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-3 sm:p-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--amber)]/10">
+                  <svg className="h-4 w-4 text-[var(--amber)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">Flash Bid</span>
+              </div>
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed">Send the seller a time-limited bid they can accept instantly. You set the price and the clock — if they don&apos;t respond, it expires and you owe nothing.</p>
             </div>
 
           </div>

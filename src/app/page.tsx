@@ -105,8 +105,9 @@ function HeroBanner() {
           </div>
 
           {/* How it works */}
-          <div className="flex flex-col gap-2 sm:gap-3">
-            <h2 style={{ transform: 'skewX(-8deg)' }} className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-[var(--text-primary)] mb-1 sm:mb-2">Four ways to buy</h2>
+          <div>
+            <h2 style={{ transform: 'skewX(-8deg)' }} className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-[var(--text-primary)] mb-2 sm:mb-3">Four ways to buy</h2>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-3 sm:p-4">
               <div className="flex items-center gap-3 mb-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)]/10">
@@ -143,7 +144,7 @@ function HeroBanner() {
               </div>
               <p className="text-xs text-[var(--text-muted)] leading-relaxed">Describe in chat the tickets that you want: event type, your budget, locations, number of seats. Let TicksBid buy on your behalf — on your terms.</p>
             </div>
-
+            </div>
           </div>
         </div>
       </div>

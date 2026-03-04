@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import SellerOffers from "@/components/SellerOffers";
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -390,6 +391,9 @@ function OffersSection({ listings, loading }: { listings: Listing[]; loading: bo
             </Link>
           </div>
         )}
+
+        {/* Seller: incoming timed offers */}
+        {isActive && <SellerOffers ticketId={listing.id} />}
       </div>
     );
   };

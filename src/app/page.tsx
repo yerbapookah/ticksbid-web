@@ -1,5 +1,6 @@
 import { searchEvents, getTicketCountsByEvent, type EventSummary } from "@/lib/data";
 import Link from "next/link";
+import FavoriteButton from "@/components/FavoriteButton";
 
 function EventTypeBadge({ type }: { type: string }) {
   const cls: Record<string, string> = {
@@ -40,11 +41,14 @@ function EventCard({ event, index, popular, ticketCount }: { event: EventSummary
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-card)] via-transparent to-transparent opacity-60" />
           <div className="absolute left-3 top-3"><EventTypeBadge type={event.event_type} /></div>
-          {popular && (
-            <div className="absolute right-3 top-3 rounded-md bg-[var(--bg-card)] px-2 py-1 shadow-lg">
-              <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--amber)]">🔥 Popular</span>
-            </div>
-          )}
+          <div className="absolute right-3 top-3 flex items-center gap-2">
+            {popular && (
+              <div className="rounded-md bg-[var(--bg-card)]/80 backdrop-blur px-2 py-1 shadow-lg">
+                <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--amber)]">🔥 Popular</span>
+              </div>
+            )}
+            <FavoriteButton eventId={event.id} />
+          </div>
         </div>
         <div className="p-3 sm:p-5">
           <h3 className="mb-1.5 sm:mb-2 text-[0.85rem] sm:text-[0.95rem] font-semibold leading-tight text-[var(--text-primary)] group-hover:text-[var(--accent-hover)] transition-colors">

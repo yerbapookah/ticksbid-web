@@ -1,4 +1,4 @@
-import Link from "next/link";
+import ProfileFavorites from "@/components/ProfileFavorites";
 
 // Mock data — will be replaced with real API calls once auth is wired up
 const MOCK_USER = {
@@ -19,29 +19,7 @@ const MOCK_STATS = {
   activeOffers: 2,
 };
 
-const MOCK_FAVORITES = [
-  {
-    id: "a9f93a62-a719-4cb0-a588-154a622e5162",
-    name: "Lakers vs. Warriors",
-    event_type: "sports",
-    start_time: "2026-03-14T20:00:00",
-    thumbnail_url: "https://images.unsplash.com/photo-1616353352910-15d970ac020b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
-  },
-  {
-    id: "d1c33b78-9588-4b1b-a024-d51024906554",
-    name: "Les Misérables - National Tour",
-    event_type: "theater",
-    start_time: "2026-02-19T19:30:00",
-    thumbnail_url: "https://images.unsplash.com/photo-1583422409516-2895a77efded?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-  },
-  {
-    id: "f7a12b34-5678-4def-9012-abcdef345678",
-    name: "Coachella Music Festival 2026",
-    event_type: "festival",
-    start_time: "2026-04-10T12:00:00",
-    thumbnail_url: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-  },
-];
+
 
 function StarRating({ rating, count }: { rating: number; count: number }) {
   const full = Math.floor(rating);
@@ -92,37 +70,11 @@ function StatBlock({
   );
 }
 
-function EventTypeBadge({ type }: { type: string }) {
-  const cls: Record<string, string> = {
-    concert: "badge-concert",
-    sports: "badge-sports",
-    theater: "badge-theater",
-    comedy: "badge-comedy",
-    festival: "badge-festival",
-  };
-  return (
-    <span className={`badge ${cls[type?.toLowerCase()] || "badge-concert"}`}>
-      {type || "event"}
-    </span>
-  );
-}
 
-function formatDate(dateStr: string) {
-  try {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return dateStr;
-  }
-}
 
 export default function ProfilePage() {
   const user = MOCK_USER;
   const stats = MOCK_STATS;
-  const favorites = MOCK_FAVORITES;
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-12">
@@ -186,56 +138,10 @@ export default function ProfilePage() {
 
       {/* ---- Bottom: Favorites ---- */}
       <div className="fade-up" style={{ animationDelay: "160ms" }}>
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-            Favorited Events
-          </h2>
-          <span className="text-xs text-[var(--text-muted)]">
-            {favorites.length} event{favorites.length !== 1 ? "s" : ""}
-          </span>
-        </div>
-
-        {favorites.length > 0 ? (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {favorites.map((event) => (
-              <Link key={event.id} href={`/events/${event.id}`}>
-                <div className="group cursor-pointer overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-card)] transition-all hover:border-[var(--border-hover)]">
-                  <div className="aspect-[16/10] overflow-hidden bg-[var(--bg-secondary)]">
-                    {event.thumbnail_url ? (
-                      <img
-                        src={event.thumbnail_url}
-                        alt={event.name}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center">
-                        <span className="text-2xl font-bold text-[var(--text-muted)]">
-                          {event.name.charAt(0)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <div className="mb-2"><EventTypeBadge type={event.event_type} /></div>
-                    <h3 className="text-sm font-semibold text-[var(--text-primary)] group-hover:text-[var(--accent-hover)] transition-colors">
-                      {event.name}
-                    </h3>
-                    <p className="mt-1 text-xs text-[var(--text-muted)]">
-                      {formatDate(event.start_time)}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--bg-card)] p-12 text-center">
-            <svg className="mx-auto mb-3 h-8 w-8 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-            <p className="text-sm text-[var(--text-muted)]">No favorited events yet</p>
-          </div>
-        )}
+        <h2 className="mb-5 text-lg font-semibold text-[var(--text-primary)]">
+          Favorited Events
+        </h2>
+        <ProfileFavorites />
       </div>
     </div>
   );

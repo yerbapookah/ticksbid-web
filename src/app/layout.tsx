@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { AuthProvider } from "@/lib/auth";
+import { FavoritesProvider } from "@/context/FavoritesContext";
 import HeaderAuth from "@/components/HeaderAuth";
 import MobileMenu from "@/components/MobileMenu";
 import "./globals.css";
@@ -171,9 +172,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <AuthProvider>
-          <Header />
-          <main className="min-h-screen">{children}</main>
-          <Footer />
+          <FavoritesProvider>
+            <Header />
+            <main className="min-h-screen">{children}</main>
+            <Footer />
+          </FavoritesProvider>
         </AuthProvider>
       </body>
     </html>

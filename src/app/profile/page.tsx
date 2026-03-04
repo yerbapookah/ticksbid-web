@@ -1,4 +1,3 @@
-import ProfileFavorites from "@/components/ProfileFavorites";
 
 // Mock data — will be replaced with real API calls once auth is wired up
 const MOCK_USER = {
@@ -129,20 +128,13 @@ export default function ProfilePage() {
             accent="text-[var(--accent-hover)]"
           />
           <StatBlock
-            label="Active Offers"
+            label="Flash Bids"
             value={stats.activeOffers}
             accent="text-[var(--amber)]"
           />
         </div>
       </div>
 
-      {/* ---- Bottom: Favorites ---- */}
-      <div className="fade-up" style={{ animationDelay: "160ms" }}>
-        <h2 className="mb-5 text-lg font-semibold text-[var(--text-primary)]">
-          Favorited Events
-        </h2>
-        <ProfileFavorites />
-      </div>
     </div>
   );
 }

@@ -22,9 +22,9 @@ interface AuctionTicketCardProps {
   onSelect?: (ticketId: string) => void;
 }
 
-type CardMode = "bid" | "offer";
+type CardMode = "bid" | "flash";
 
-const OFFER_DURATIONS = [
+const FLASH_BID_DURATIONS = [
   { label: "1 hour", value: 1 },
   { label: "2 hours", value: 2 },
   { label: "4 hours", value: 4 },
@@ -57,13 +57,13 @@ export default function AuctionTicketCard({
   const [liveBid, setLiveBid] = useState(currentBid ?? 0);
   const [expanded, setExpanded] = useState(false);
 
-  // Offer state
+  // Flash bid state
   const [mode, setMode] = useState<CardMode>("bid");
-  const [offerAmount, setOfferAmount] = useState("");
-  const [offerDuration, setOfferDuration] = useState(4);
-  const [offerLoading, setOfferLoading] = useState(false);
-  const [offerError, setOfferError] = useState("");
-  const [offerSuccess, setOfferSuccess] = useState("");
+  const [flashAmount, setFlashAmount] = useState("");
+  const [flashDuration, setFlashDuration] = useState(4);
+  const [flashLoading, setFlashLoading] = useState(false);
+  const [flashError, setFlashError] = useState("");
+  const [flashSuccess, setFlashSuccess] = useState("");
 
   const hasBids = liveBid > 0;
   const displayBid = liveBid;
@@ -72,7 +72,7 @@ export default function AuctionTicketCard({
   const auctionTimeLeft = auctionEndTime
     ? new Date(auctionEndTime).getTime() - Date.now()
     : Infinity;
-  const canOffer = auctionTimeLeft > 60 * 60 * 1000;
+  const canFlashBid = auctionTimeLeft > 60 * 60 * 1000;
 
   async function handleBuyNow() {
     setCheckoutLoading(true);
@@ -144,21 +144,21 @@ export default function AuctionTicketCard({
     }
   }
 
-  async function handlePlaceOffer() {
-    setOfferError("");
-    setOfferSuccess("");
+  async function handlePlaceFlashBid() {
+    setFlashError("");
+    setFlashSuccess("");
 
-    const amount = parseFloat(offerAmount);
+    const amount = parseFloat(flashAmount);
     if (isNaN(amount) || amount <= 0) {
-      setOfferError("Enter a valid amount");
+      setFlashError("Enter a valid amount");
       return;
     }
     if (buyItNowPrice && amount >= buyItNowPrice) {
-      setOfferError(`Must be less than Buy Now ($${buyItNowPrice.toFixed(2)})`);
+      setFlashError(`Must be less than Buy Now (${buyItNowPrice.toFixed(2)})`);
       return;
     }
 
-    setOfferLoading(true);
+    setFlashLoading(true);
     try {
       const res = await fetch("/api/offers", {
         method: "POST",
@@ -167,22 +167,22 @@ export default function AuctionTicketCard({
           ticket_id: ticketId,
           auction_id: auctionId,
           offer_amount: amount,
-          duration_hours: offerDuration,
+          duration_hours: flashDuration,
           bidder_name: "You",
         }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setOfferError(data.error || "Failed to place offer");
+        setFlashError(data.error || "Failed to send flash bid");
       } else {
-        setOfferAmount("");
-        setOfferSuccess(`Offer of $${amount.toFixed(2)} sent — valid for ${offerDuration}h`);
-        setTimeout(() => setOfferSuccess(""), 5000);
+        setFlashAmount("");
+        setFlashSuccess(`Flash bid of ${amount.toFixed(2)} sent — valid for ${flashDuration}h`);
+        setTimeout(() => setFlashSuccess(""), 5000);
       }
     } catch {
-      setOfferError("Failed to place offer");
+      setFlashError("Failed to send flash bid");
     } finally {
-      setOfferLoading(false);
+      setFlashLoading(false);
     }
   }
 
@@ -283,10 +283,10 @@ export default function AuctionTicketCard({
           className="mt-3 border-t border-[var(--border)] pt-3"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Bid / Offer toggle */}
+          {/* Bid / Flash Bid toggle */}
           <div className="flex items-center gap-1 mb-3 rounded-lg bg-[var(--bg-card)] p-0.5 border border-[var(--border)]">
             <button
-              onClick={() => { setMode("bid"); setOfferError(""); setOfferSuccess(""); }}
+              onClick={() => { setMode("bid"); setFlashError(""); setFlashSuccess(""); }}
               className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
                 mode === "bid"
                   ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
@@ -296,18 +296,18 @@ export default function AuctionTicketCard({
               Place Bid
             </button>
             <button
-              onClick={() => { setMode("offer"); setBidError(""); setBidSuccess(""); }}
-              disabled={!canOffer}
-              title={!canOffer ? "Less than 1 hour left in auction" : "Make a timed offer to the seller"}
+              onClick={() => { setMode("flash"); setBidError(""); setBidSuccess(""); }}
+              disabled={!canFlashBid}
+              title={!canFlashBid ? "Less than 1 hour left in auction" : "Send a time-limited flash bid to the seller"}
               className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
-                mode === "offer"
+                mode === "flash"
                   ? "bg-[var(--amber)]/15 text-[var(--amber)] shadow-sm"
-                  : !canOffer
+                  : !canFlashBid
                   ? "text-[var(--text-muted)]/40 cursor-not-allowed"
                   : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
               }`}
             >
-              Make Offer
+              Flash Bid
             </button>
           </div>
 
@@ -349,8 +349,8 @@ export default function AuctionTicketCard({
             </div>
           )}
 
-          {/* Offer mode */}
-          {mode === "offer" && (
+          {/* Flash bid mode */}
+          {mode === "flash" && (
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <div className="relative flex-1">
@@ -363,42 +363,42 @@ export default function AuctionTicketCard({
                   <input
                     type="text"
                     inputMode="decimal"
-                    value={offerAmount}
+                    value={flashAmount}
                     onChange={(e) => {
                       const val = e.target.value;
                       if (val === "" || /^\d*\.?\d{0,2}$/.test(val)) {
-                        setOfferAmount(val);
-                        setOfferError("");
-                        setOfferSuccess("");
+                        setFlashAmount(val);
+                        setFlashError("");
+                        setFlashSuccess("");
                       }
                     }}
-                    onKeyDown={(e) => e.key === "Enter" && handlePlaceOffer()}
-                    placeholder="Your offer"
+                    onKeyDown={(e) => e.key === "Enter" && handlePlaceFlashBid()}
+                    placeholder="Your flash bid"
                     style={{ paddingLeft: "28px" }}
                     className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-card)] py-2 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--amber)]/60 focus:outline-none"
                   />
                 </div>
                 <select
-                  value={offerDuration}
-                  onChange={(e) => setOfferDuration(Number(e.target.value))}
+                  value={flashDuration}
+                  onChange={(e) => setFlashDuration(Number(e.target.value))}
                   className="flex-shrink-0 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-2 py-2 text-xs text-[var(--text-secondary)] focus:border-[var(--amber)]/60 focus:outline-none"
                 >
-                  {OFFER_DURATIONS.map((d) => (
+                  {FLASH_BID_DURATIONS.map((d) => (
                     <option key={d.value} value={d.value}>{d.label}</option>
                   ))}
                 </select>
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={handlePlaceOffer}
-                  disabled={offerLoading || !offerAmount}
+                  onClick={handlePlaceFlashBid}
+                  disabled={flashLoading || !flashAmount}
                   className="flex-1 rounded-lg bg-[var(--amber)] px-4 py-2 text-sm font-semibold text-black transition-all hover:brightness-110 disabled:opacity-50"
                 >
-                  {offerLoading ? "Sending..." : "Send Offer"}
+                  {flashLoading ? "Sending..." : "Send Flash Bid"}
                 </button>
               </div>
               <p className="mt-1.5 text-[0.6rem] text-[var(--text-muted)]">
-                The seller has {offerDuration}h to accept. If they don&apos;t respond, the offer expires automatically.
+                The seller has {flashDuration}h to accept. If they don&apos;t respond, the flash bid expires automatically.
               </p>
             </div>
           )}
@@ -408,8 +408,8 @@ export default function AuctionTicketCard({
       {/* Feedback */}
       {bidError && <p className="mt-2 text-xs text-red-500">{bidError}</p>}
       {bidSuccess && <p className="mt-2 text-xs text-[var(--green)]">{bidSuccess}</p>}
-      {offerError && <p className="mt-2 text-xs text-red-500">{offerError}</p>}
-      {offerSuccess && <p className="mt-2 text-xs text-[var(--amber)]">{offerSuccess}</p>}
+      {flashError && <p className="mt-2 text-xs text-red-500">{flashError}</p>}
+      {flashSuccess && <p className="mt-2 text-xs text-[var(--amber)]">{flashSuccess}</p>}
 
       {/* Expandable detail panel */}
       {expanded && (

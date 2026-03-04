@@ -78,7 +78,7 @@ export default function SellerOffers({ ticketId }: { ticketId: string }) {
   return (
     <div className="mt-3 pt-3 border-t border-[var(--border)]">
       <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">
-        Offers ({pending.length} pending)
+        Flash Bids ({pending.length} pending)
       </p>
 
       {pending.length > 0 && (

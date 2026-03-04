@@ -62,7 +62,7 @@ export default function ProfileFavorites() {
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-            Favorited Events
+          Watched Events
           </h3>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -84,7 +84,7 @@ export default function ProfileFavorites() {
     <div>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-          Favorited Events ({events.length})
+          {events.length} event{events.length !== 1 ? "s" : ""}
         </h3>
       </div>
       {events.length === 0 ? (
@@ -92,8 +92,8 @@ export default function ProfileFavorites() {
           <svg className="mx-auto h-10 w-10 text-[var(--text-muted)] mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
-          <p className="text-sm text-[var(--text-muted)] mb-1">No favorites yet</p>
-          <p className="text-xs text-[var(--text-muted)]">Tap the heart on any event to save it here.</p>
+          <p className="text-sm text-[var(--text-muted)] mb-1">Your watch list is empty</p>
+          <p className="text-xs text-[var(--text-muted)]">Tap the heart on any event to add it to your watch list.</p>
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

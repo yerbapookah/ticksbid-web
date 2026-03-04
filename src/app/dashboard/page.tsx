@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import SellerOffers from "@/components/SellerOffers";
+import ProfileFavorites from "@/components/ProfileFavorites";
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -523,10 +524,20 @@ function WalletSection() {
   );
 }
 
+function WatchListSection() {
+  return (
+    <div>
+      <h2 className="mb-1 text-xl font-semibold text-[var(--text-primary)]">Watch List</h2>
+      <p className="mb-6 text-sm text-[var(--text-muted)]">Events you&apos;re keeping an eye on</p>
+      <ProfileFavorites />
+    </div>
+  );
+}
+
 // ─── Main ────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState("orders");
+  const [activeTab, setActiveTab] = useState("watchlist");
   const [listings, setListings] = useState<Listing[]>([]);
   const [listingsLoading, setListingsLoading] = useState(true);
 
@@ -553,6 +564,16 @@ export default function DashboardPage() {
   const soldListings = listings.filter((l) => l.auction_status === "completed" || l.auction_status === "sold");
 
   const TABS = [
+    {
+      id: "watchlist",
+      label: "Watch List",
+      icon: (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
+      ),
+      count: null,
+    },
     {
       id: "orders",
       label: "Purchases",
@@ -606,6 +627,7 @@ export default function DashboardPage() {
   ];
 
   const sections: Record<string, React.ReactNode> = {
+    watchlist: <WatchListSection />,
     orders: <OrdersSection />,
     offers: <OffersSection listings={listings} loading={listingsLoading} />,
     sales: <SalesSection listings={listings} />,

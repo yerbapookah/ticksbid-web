@@ -106,7 +106,7 @@ function HeroBanner() {
 
           {/* How it works */}
           <div>
-            <h2 style={{ transform: 'skewX(-8deg)' }} className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-[var(--text-primary)] mb-2 sm:mb-3">Four ways to buy</h2>
+            <h2 style={{ transform: 'skewX(-8deg)' }} className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-[var(--text-primary)] mb-2 sm:mb-3 text-center">Four ways to buy</h2>
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-3 sm:p-4">
               <div className="flex items-center gap-3 mb-2">

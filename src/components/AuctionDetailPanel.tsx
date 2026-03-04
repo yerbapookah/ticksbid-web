@@ -202,9 +202,10 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
                 strokeWidth={1}
                 label={{
                   value: `Reserve ${reserve}`,
-                  position: "insideTopLeft",
+                  position: "insideTopRight",
                   fill: "var(--amber)",
                   fontSize: 10,
+                  dy: -8,
                 }}
               />
               <ReferenceLine

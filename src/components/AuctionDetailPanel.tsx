@@ -174,10 +174,17 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
                 vertical={false}
               />
               <XAxis
-                dataKey="timeLabel"
+                dataKey="time"
+                type="number"
+                scale="time"
+                domain={['dataMin', 'dataMax']}
                 tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
                 axisLine={{ stroke: 'var(--border)' }}
                 tickLine={false}
+                tickFormatter={(ts) => {
+                  const d = new Date(ts);
+                  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                }}
               />
               <YAxis
                 domain={[yMin, yMax]}

@@ -115,7 +115,7 @@ function HeroBanner() {
                 </div>
                 <span className="text-sm font-semibold text-[var(--text-primary)]">Place a Bid</span>
               </div>
-              <p className="text-xs text-[var(--text-muted)] leading-relaxed">Name your price before the auction ends. Set a max auto-bid and the system competes for you.</p>
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed">Name your price and compete in the open market for tickets.</p>
             </div>
             <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-3 sm:p-4">
               <div className="flex items-center gap-3 mb-2">
@@ -124,7 +124,7 @@ function HeroBanner() {
                 </div>
                 <span className="text-sm font-semibold text-[var(--text-primary)]">Buy Now</span>
               </div>
-              <p className="text-xs text-[var(--text-muted)] leading-relaxed">Pay the buy-it-now price and get your tickets instantly. Zero fees added.</p>
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed">Pay the buy-it-now price and secure your tickets instantly.</p>
             </div>
             <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-3 sm:p-4">
               <div className="flex items-center gap-3 mb-2">
@@ -133,7 +133,7 @@ function HeroBanner() {
                 </div>
                 <span className="text-sm font-semibold text-[var(--text-primary)]">Flash Bid</span>
               </div>
-              <p className="text-xs text-[var(--text-muted)] leading-relaxed">Send the seller a time-limited bid they can accept instantly. You set the price and the clock — if they don&apos;t respond, it expires and you owe nothing.</p>
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed">Send the seller a time-limited bid. If they don&apos;t respond, it expires and you owe nothing.</p>
             </div>
             <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)]/60 backdrop-blur p-3 sm:p-4">
               <div className="flex items-center gap-3 mb-2">
@@ -142,7 +142,7 @@ function HeroBanner() {
                 </div>
                 <span className="text-sm font-semibold text-[var(--text-primary)]">Tell TicksBid's AI What You Want</span>
               </div>
-              <p className="text-xs text-[var(--text-muted)] leading-relaxed">Describe in chat the tickets that you want: event type, your budget, locations, number of seats. Let TicksBid buy on your behalf — on your terms.</p>
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed">Describe in chat your budget and the tickets that you want. Let TicksBid buy on your behalf — on your terms.</p>
             </div>
             </div>
           </div>

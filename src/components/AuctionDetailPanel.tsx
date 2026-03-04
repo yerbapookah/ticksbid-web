@@ -269,11 +269,14 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
           backgroundColor: 'var(--bg-card)',
           border: '1px solid var(--border)',
           textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column' as const,
+          justifyContent: 'space-between',
         }}>
           <p style={{ fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '4px' }}>
             Total Bids
           </p>
-          <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+          <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: 'auto' }}>
             {totalBids}
           </p>
         </div>
@@ -284,11 +287,14 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
           backgroundColor: 'var(--bg-card)',
           border: '1px solid var(--border)',
           textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column' as const,
+          justifyContent: 'space-between',
         }}>
           <p style={{ fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '4px' }}>
             Unique Bidders
           </p>
-          <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+          <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: 'auto' }}>
             {uniqueBidders}
           </p>
         </div>
@@ -299,11 +305,14 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
           backgroundColor: 'var(--bg-card)',
           border: '1px solid var(--border)',
           textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column' as const,
+          justifyContent: 'space-between',
         }}>
           <p style={{ fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '4px' }}>
             Est. Fair Value
           </p>
-          <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent)' }}>
+          <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent)', marginTop: 'auto' }}>
             ${fairValue.toFixed(2)}
           </p>
         </div>

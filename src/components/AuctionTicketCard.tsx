@@ -342,7 +342,7 @@ export default function AuctionTicketCard({
               <button
                 onClick={handlePlaceBid}
                 disabled={bidLoading || !bidInput}
-                className="flex-shrink-0 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-red-700 disabled:opacity-50"
+                className="flex-shrink-0 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-green-700 disabled:opacity-50"
               >
                 {bidLoading ? "..." : "Place Bid"}
               </button>

@@ -218,7 +218,7 @@ export default function AuctionTicketCard({
             <p className="text-[0.6rem] uppercase tracking-wider text-[var(--text-muted)]">
               {hasBids ? "Current bid" : "No bids"}
             </p>
-            <p className="text-lg font-bold text-[var(--text-primary)]">
+            <p className="text-lg font-bold text-[var(--green)]">
               ${displayBid.toFixed(2)}
             </p>
           </div>
@@ -342,7 +342,7 @@ export default function AuctionTicketCard({
               <button
                 onClick={handlePlaceBid}
                 disabled={bidLoading || !bidInput}
-                className="flex-shrink-0 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-all hover:border-[var(--border-hover)] hover:text-[var(--text-primary)] disabled:opacity-50"
+                className="flex-shrink-0 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-red-700 disabled:opacity-50"
               >
                 {bidLoading ? "..." : "Place Bid"}
               </button>

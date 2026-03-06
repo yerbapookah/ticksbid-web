@@ -203,19 +203,7 @@ export async function searchEvents(
   return apiGet<EventSummary[]>("/events", params);
 }
 
-async function getVenueLayoutInfo(venueId: string): Promise<{ layout_type: string | null; layout_json: string | null }> {
-  try {
-    const { rows } = await sql`
-      SELECT layout_type, layout_json FROM venue WHERE id = ${venueId}::uuid LIMIT 1
-    `;
-    return {
-      layout_type: rows[0]?.layout_type || null,
-      layout_json: rows[0]?.layout_json || null,
-    };
-  } catch {
-    return { layout_type: null, layout_json: null };
-  }
-}
+
 
 export async function getEvent(id: string): Promise<Event> {
   // Try Neon first
@@ -253,7 +241,8 @@ export async function getEvent(id: string): Promise<Event> {
           address: r.venue_address || '',
           venue_type: r.venue_type || '',
           max_capacity: r.max_capacity || 0,
-          ...(await getVenueLayoutInfo(r.venue_id)),
+          layout_type: null,
+          layout_json: null,
         },
         tickets,
       };

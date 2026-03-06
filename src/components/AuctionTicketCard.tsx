@@ -159,7 +159,7 @@ export default function AuctionTicketCard({
       return;
     }
     if (buyItNowPrice && amount >= buyItNowPrice) {
-      setFlashError(`Must be less than Buy Now (${buyItNowPrice.toFixed(2)})`);
+      setFlashError(`Must be less than Buy Now ($${buyItNowPrice.toFixed(2)})`);
       return;
     }
 

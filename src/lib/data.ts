@@ -105,49 +105,52 @@ export async function searchEvents(
   eventType?: string,
   limit = 20
 ): Promise<EventSummary[]> {
-  // Try Neon first — fuzzy multi-token search across event + venue + performer
+  // Try Neon first
   try {
-    // Enable trigram extension for fuzzy matching
-    try { await sql`CREATE EXTENSION IF NOT EXISTS pg_trgm`; } catch { /* already exists */ }
-
     const conditions: string[] = [];
     let neonQuery: string;
+    let useFuzzy = false;
 
+    // Try enabling trigram for fuzzy search
     if (query) {
-      // Split search into tokens, sanitize
-      const tokens = query.trim().split(/\s+/).filter(Boolean).map(t => t.replace(/'/g, "''").toLowerCase());
+      try {
+        await sql`CREATE EXTENSION IF NOT EXISTS pg_trgm`;
+        useFuzzy = true;
+      } catch { /* not available */ }
+    }
 
-      // For each token, compute best similarity across event name, venue name, performer name
-      // Also give credit for substring (LIKE) matches to handle exact partial matches
+    if (query && useFuzzy) {
+      const tokens = query.trim().split(/\s+/).filter(Boolean).map(t => t.replace(/'/g, "''").toLowerCase());
       const tokenScores = tokens.map(t => `GREATEST(
         COALESCE(similarity(LOWER(e.name), '${t}'), 0),
         COALESCE(similarity(LOWER(COALESCE(v.name, '')), '${t}'), 0),
-        COALESCE(similarity(LOWER(COALESCE(p.name, '')), '${t}'), 0),
         CASE WHEN LOWER(e.name) LIKE '%${t}%' THEN 0.6 ELSE 0 END,
-        CASE WHEN LOWER(COALESCE(v.name, '')) LIKE '%${t}%' THEN 0.6 ELSE 0 END,
-        CASE WHEN LOWER(COALESCE(p.name, '')) LIKE '%${t}%' THEN 0.6 ELSE 0 END
+        CASE WHEN LOWER(COALESCE(v.name, '')) LIKE '%${t}%' THEN 0.6 ELSE 0 END
       )`);
-
       const scoreExpr = tokenScores.join(' + ');
-
       neonQuery = `
         SELECT e.id, e.name, e.event_type, e.venue_id, e.start_time, e.thumbnail_url,
                (${scoreExpr}) as score
         FROM event e
         LEFT JOIN venue v ON e.venue_id = v.id
-        LEFT JOIN performer p ON LOWER(split_part(e.name, ' @ ', 1)) = LOWER(p.name)
       `;
-      // Require minimum relevance
       conditions.push(`(${scoreExpr}) > 0.15`);
+    } else if (query) {
+      // Fallback: simple ILIKE across event name and venue name
+      const q = query.replace(/'/g, "''");
+      neonQuery = `
+        SELECT e.id, e.name, e.event_type, e.venue_id, e.start_time, e.thumbnail_url, 0 as score
+        FROM event e
+        LEFT JOIN venue v ON e.venue_id = v.id
+      `;
+      conditions.push(`(LOWER(e.name) LIKE '%${q.toLowerCase()}%' OR LOWER(COALESCE(v.name, '')) LIKE '%${q.toLowerCase()}%')`);
     } else {
       neonQuery = `
-        SELECT e.id, e.name, e.event_type, e.venue_id, e.start_time, e.thumbnail_url,
-               0 as score
+        SELECT e.id, e.name, e.event_type, e.venue_id, e.start_time, e.thumbnail_url, 0 as score
         FROM event e
       `;
     }
 
-    // Event type filter (supports comma-separated multi-select)
     if (eventType) {
       const types = eventType.split(',').filter(Boolean).map(t => `'${t.replace(/'/g, "''")}'`);
       if (types.length === 1) {
@@ -157,11 +160,9 @@ export async function searchEvents(
       }
     }
 
-    // Only future events
     conditions.push(`(e.start_time IS NULL OR e.start_time > NOW() - INTERVAL '1 day')`);
     if (conditions.length > 0) neonQuery += ` WHERE ${conditions.join(' AND ')}`;
 
-    // Sort by relevance when searching, by date otherwise
     if (query) {
       neonQuery += ` ORDER BY score DESC, e.start_time ASC NULLS LAST LIMIT ${limit}`;
     } else {
@@ -202,12 +203,24 @@ export async function searchEvents(
   return apiGet<EventSummary[]>("/events", params);
 }
 
+async function getVenueLayoutData(venueId: string, column: string): Promise<string | null> {
+  try {
+    const { rows } = await sql.query(
+      `SELECT ${column} FROM venue WHERE id = $1 LIMIT 1`,
+      [venueId]
+    );
+    return rows[0]?.[column] || null;
+  } catch {
+    return null; // column may not exist yet
+  }
+}
+
 export async function getEvent(id: string): Promise<Event> {
   // Try Neon first
   try {
     const { rows } = await sql`
       SELECT e.id, e.name, e.event_type, e.venue_id, e.start_time, e.thumbnail_url, e.event_url,
-             v.name as venue_name, v.address as venue_address, v.venue_type, v.max_capacity, v.layout_type, v.layout_json
+             v.name as venue_name, v.address as venue_address, v.venue_type, v.max_capacity
       FROM event e
       LEFT JOIN venue v ON e.venue_id = v.id
       WHERE e.id = ${id}::uuid
@@ -238,8 +251,8 @@ export async function getEvent(id: string): Promise<Event> {
           address: r.venue_address || '',
           venue_type: r.venue_type || '',
           max_capacity: r.max_capacity || 0,
-          layout_type: r.layout_type || null,
-          layout_json: r.layout_json || null,
+          layout_type: await getVenueLayoutData(r.venue_id, 'layout_type'),
+          layout_json: await getVenueLayoutData(r.venue_id, 'layout_json'),
         },
         tickets,
       };

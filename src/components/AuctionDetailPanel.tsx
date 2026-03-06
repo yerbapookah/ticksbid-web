@@ -41,6 +41,7 @@ interface AuctionDetailPanelProps {
   ticketId: string;
   reservePrice?: number;
   buyItNowPrice?: number;
+  refreshKey?: number;
 }
 
 function formatTime(dateStr: string) {
@@ -101,7 +102,7 @@ function ChartTooltip({ active, payload }: any) {
   );
 }
 
-export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPrice }: AuctionDetailPanelProps) {
+export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPrice, refreshKey }: AuctionDetailPanelProps) {
   const [auction, setAuction] = useState<AuctionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -133,7 +134,7 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
       }
     }
     fetchAuction();
-  }, [ticketId]);
+  }, [ticketId, refreshKey]);
 
   if (loading) {
     return (

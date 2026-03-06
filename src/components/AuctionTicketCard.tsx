@@ -64,6 +64,7 @@ export default function AuctionTicketCard({
   const [flashLoading, setFlashLoading] = useState(false);
   const [flashError, setFlashError] = useState("");
   const [flashSuccess, setFlashSuccess] = useState("");
+  const [chartRefreshKey, setChartRefreshKey] = useState(0);
 
   const hasBids = liveBid > 0;
   const displayBid = liveBid;
@@ -135,6 +136,7 @@ export default function AuctionTicketCard({
         setLiveBid(data.bid.bid_amount);
         setBidInput("");
         setBidSuccess("Bid placed!");
+        setChartRefreshKey(k => k + 1);
         setTimeout(() => setBidSuccess(""), 3000);
       }
     } catch {
@@ -182,6 +184,7 @@ export default function AuctionTicketCard({
       } else {
         setFlashAmount("");
         setFlashSuccess(`Flash bid of ${amount.toFixed(2)} sent — valid for ${flashDuration}h`);
+        setChartRefreshKey(k => k + 1);
         setTimeout(() => setFlashSuccess(""), 5000);
       }
     } catch {
@@ -423,6 +426,7 @@ export default function AuctionTicketCard({
             ticketId={ticketId}
             reservePrice={undefined}
             buyItNowPrice={buyItNowPrice}
+            refreshKey={chartRefreshKey}
           />
         </div>
       )}

@@ -10,7 +10,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-  Scatter,
   ComposedChart,
 } from "recharts";
 
@@ -290,19 +289,29 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
                 }}
                 connectNulls={false}
               />
-              <Scatter
+              <Area
+                type="stepAfter"
                 dataKey="flash_amount"
-                fill="var(--amber)"
-                shape={(props: any) => {
-                  const { cx, cy } = props;
-                  if (cx == null || cy == null) return null;
+                stroke="var(--amber)"
+                strokeWidth={0}
+                fill="none"
+                dot={(props: any) => {
+                  const { cx, cy, payload } = props;
+                  if (cx == null || cy == null || payload.flash_amount == null) return <g />;
                   return (
-                    <g>
+                    <g key={`flash-${cx}-${cy}`}>
                       <circle cx={cx} cy={cy} r={6} fill="var(--amber)" opacity={0.25} />
                       <circle cx={cx} cy={cy} r={4} fill="var(--amber)" stroke="var(--bg-secondary)" strokeWidth={2} />
                     </g>
                   );
                 }}
+                activeDot={{
+                  r: 6,
+                  fill: 'var(--amber)',
+                  stroke: '#fff',
+                  strokeWidth: 2,
+                }}
+                connectNulls={false}
               />
             </ComposedChart>
           </ResponsiveContainer>

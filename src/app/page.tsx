@@ -1,6 +1,7 @@
 import { searchEvents, getTicketCountsByEvent, type EventSummary } from "@/lib/data";
 import Link from "next/link";
 import FavoriteButton from "@/components/FavoriteButton";
+import SortDropdown from "@/components/SortDropdown";
 
 function EventTypeBadge({ type }: { type: string }) {
   const cls: Record<string, string> = {
@@ -152,17 +153,41 @@ function HeroBanner() {
   );
 }
 
-export default async function Home({ searchParams }: { searchParams: Promise<{ q?: string; type?: string }> }) {
+const SORT_OPTIONS = [
+  { value: "", label: "Date (Soonest)" },
+  { value: "date_desc", label: "Date (Latest)" },
+  { value: "bid_desc", label: "Current Bid: High → Low" },
+  { value: "bid_asc", label: "Current Bid: Low → High" },
+  { value: "buynow_desc", label: "Buy Now: High → Low" },
+  { value: "buynow_asc", label: "Buy Now: Low → High" },
+  { value: "ending_asc", label: "Ending Soonest" },
+  { value: "ending_desc", label: "Ending Latest" },
+];
+
+export default async function Home({ searchParams }: { searchParams: Promise<{ q?: string; type?: string; sort?: string }> }) {
   const params = await searchParams;
   const query = params.q || "";
   const eventType = params.type || "";
+  const sort = params.sort || "";
 
   let events: EventSummary[] = [];
   let ticketCounts: Record<string, number> = {};
   let error = "";
 
   try {
-    events = await searchEvents(query || undefined, eventType || undefined, 20);
+    events = await searchEvents(query || undefined, eventType || undefined, 40);
+
+    // Apply sorting
+    if (sort === "date_desc") {
+      events.sort((a, b) => new Date(b.start_time || 0).getTime() - new Date(a.start_time || 0).getTime());
+    } else if (sort === "ending_asc") {
+      events.sort((a, b) => new Date(a.start_time || 0).getTime() - new Date(b.start_time || 0).getTime());
+    } else if (sort === "ending_desc") {
+      events.sort((a, b) => new Date(b.start_time || 0).getTime() - new Date(a.start_time || 0).getTime());
+    }
+    // bid_desc, bid_asc, buynow_desc, buynow_asc will sort once auction data is wired to events
+
+    events = events.slice(0, 20);
   } catch (e) {
     error = "Failed to load events. Please try again.";
     console.error(e);
@@ -185,17 +210,21 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
             </h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">{events.length} event{events.length !== 1 ? "s" : ""} found</p>
           </div>
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
-            {["All", "Concert", "Sports", "Theater", "Comedy", "Festival"].map((t) => {
-              const val = t === "All" ? "" : t.toLowerCase();
-              const active = eventType === val;
-              return (
-                <Link key={t} href={`/?${new URLSearchParams({ ...(query ? { q: query } : {}), ...(val ? { type: val } : {}) }).toString()}`}
-                  className={`flex-shrink-0 rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all ${active ? "bg-[var(--accent)] text-white" : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--border-hover)] hover:text-[var(--text-primary)]"}`}>
-                  {t}
-                </Link>
-              );
-            })}
+          <div className="flex items-center gap-3 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {["All", "Concert", "Sports", "Theater", "Comedy", "Festival"].map((t) => {
+                const val = t === "All" ? "" : t.toLowerCase();
+                const active = eventType === val;
+                return (
+                  <Link key={t} href={`/?${new URLSearchParams({ ...(query ? { q: query } : {}), ...(val ? { type: val } : {}), ...(sort ? { sort } : {}) }).toString()}`}
+                    className={`flex-shrink-0 rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all ${active ? "bg-[var(--accent)] text-white" : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--border-hover)] hover:text-[var(--text-primary)]"}`}>
+                    {t}
+                  </Link>
+                );
+              })}
+            </div>
+            <div className="hidden sm:block h-5 w-px bg-[var(--border)] flex-shrink-0" />
+            <SortDropdown query={query} eventType={eventType} currentSort={sort} />
           </div>
         </div>
 

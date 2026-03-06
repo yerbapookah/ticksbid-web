@@ -203,15 +203,17 @@ export async function searchEvents(
   return apiGet<EventSummary[]>("/events", params);
 }
 
-async function getVenueLayoutData(venueId: string, column: string): Promise<string | null> {
+async function getVenueLayoutInfo(venueId: string): Promise<{ layout_type: string | null; layout_json: string | null }> {
   try {
-    const { rows } = await sql.query(
-      `SELECT ${column} FROM venue WHERE id = $1 LIMIT 1`,
-      [venueId]
-    );
-    return rows[0]?.[column] || null;
+    const { rows } = await sql`
+      SELECT layout_type, layout_json FROM venue WHERE id = ${venueId}::uuid LIMIT 1
+    `;
+    return {
+      layout_type: rows[0]?.layout_type || null,
+      layout_json: rows[0]?.layout_json || null,
+    };
   } catch {
-    return null; // column may not exist yet
+    return { layout_type: null, layout_json: null };
   }
 }
 
@@ -251,8 +253,7 @@ export async function getEvent(id: string): Promise<Event> {
           address: r.venue_address || '',
           venue_type: r.venue_type || '',
           max_capacity: r.max_capacity || 0,
-          layout_type: await getVenueLayoutData(r.venue_id, 'layout_type'),
-          layout_json: await getVenueLayoutData(r.venue_id, 'layout_json'),
+          ...(await getVenueLayoutInfo(r.venue_id)),
         },
         tickets,
       };

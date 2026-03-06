@@ -216,7 +216,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
                 const val = t === "All" ? "" : t.toLowerCase();
                 const active = eventType === val;
                 return (
-                  <Link key={t} href={`/?${new URLSearchParams({ ...(query ? { q: query } : {}), ...(val ? { type: val } : {}), ...(sort ? { sort } : {}) }).toString()}`}
+                  <Link key={t} scroll={false} href={`/?${new URLSearchParams({ ...(query ? { q: query } : {}), ...(val ? { type: val } : {}), ...(sort ? { sort } : {}) }).toString()}`}
                     className={`flex-shrink-0 rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all ${active ? "bg-[var(--accent)] text-white" : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--border-hover)] hover:text-[var(--text-primary)]"}`}>
                     {t}
                   </Link>

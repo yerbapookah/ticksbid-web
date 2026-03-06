@@ -45,7 +45,7 @@ export default function SortDropdown({
     if (query) p.set("q", query);
     if (eventType) p.set("type", eventType);
     if (val) p.set("sort", val);
-    router.push(`/?${p.toString()}`);
+    router.push(`/?${p.toString()}`, { scroll: false });
   }
 
   return (

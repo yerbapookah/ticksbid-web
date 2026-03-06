@@ -42,7 +42,7 @@ export default function SeatingChart({ venueName, seats, selectedTicketId, onSea
   const [viewBox, setViewBox] = useState({ x: 0, y: 0, w: vw, h: vh });
   const [isPanning, setIsPanning] = useState(false);
   const panStart = useRef({ x: 0, y: 0, vbx: 0, vby: 0 });
-  const MIN_ZOOM = 0.3; // can zoom out to 30% of original
+  const MIN_ZOOM = 1;   // never zoom out past default view
   const MAX_ZOOM = 5;   // can zoom in 5x
 
   const getScale = useCallback(() => viewBox.w / vw, [viewBox.w, vw]);

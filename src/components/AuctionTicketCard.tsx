@@ -153,6 +153,11 @@ export default function AuctionTicketCard({
       setFlashError("Enter a valid amount");
       return;
     }
+    const minBid = getMinBid(displayBid);
+    if (amount < minBid) {
+      setFlashError(`Minimum flash bid is $${minBid.toFixed(2)}`);
+      return;
+    }
     if (buyItNowPrice && amount >= buyItNowPrice) {
       setFlashError(`Must be less than Buy Now (${buyItNowPrice.toFixed(2)})`);
       return;
@@ -373,7 +378,7 @@ export default function AuctionTicketCard({
                       }
                     }}
                     onKeyDown={(e) => e.key === "Enter" && handlePlaceFlashBid()}
-                    placeholder="Your flash bid"
+                    placeholder={`Min ${getMinBid(displayBid).toFixed(2)}`}
                     style={{ paddingLeft: "28px" }}
                     className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-card)] py-2 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--amber)]/60 focus:outline-none"
                   />

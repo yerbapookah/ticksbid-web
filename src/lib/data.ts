@@ -103,14 +103,49 @@ export async function searchEvents(
   eventType?: string,
   limit = 20
 ): Promise<EventSummary[]> {
-  // Try Neon first (pipeline-promoted events)
+  // Try Neon first — fuzzy multi-token search across event + venue + performer
   try {
-    let neonQuery = `
-      SELECT e.id, e.name, e.event_type, e.venue_id, e.start_time, e.thumbnail_url
-      FROM event e
-    `;
+    // Enable trigram extension for fuzzy matching
+    try { await sql`CREATE EXTENSION IF NOT EXISTS pg_trgm`; } catch { /* already exists */ }
+
     const conditions: string[] = [];
-    if (query) conditions.push(`e.name ILIKE '%${query.replace(/'/g, "''")}%'`);
+    let neonQuery: string;
+
+    if (query) {
+      // Split search into tokens, sanitize
+      const tokens = query.trim().split(/\s+/).filter(Boolean).map(t => t.replace(/'/g, "''").toLowerCase());
+
+      // For each token, compute best similarity across event name, venue name, performer name
+      // Also give credit for substring (LIKE) matches to handle exact partial matches
+      const tokenScores = tokens.map(t => `GREATEST(
+        COALESCE(similarity(LOWER(e.name), '${t}'), 0),
+        COALESCE(similarity(LOWER(COALESCE(v.name, '')), '${t}'), 0),
+        COALESCE(similarity(LOWER(COALESCE(p.name, '')), '${t}'), 0),
+        CASE WHEN LOWER(e.name) LIKE '%${t}%' THEN 0.6 ELSE 0 END,
+        CASE WHEN LOWER(COALESCE(v.name, '')) LIKE '%${t}%' THEN 0.6 ELSE 0 END,
+        CASE WHEN LOWER(COALESCE(p.name, '')) LIKE '%${t}%' THEN 0.6 ELSE 0 END
+      )`);
+
+      const scoreExpr = tokenScores.join(' + ');
+
+      neonQuery = `
+        SELECT e.id, e.name, e.event_type, e.venue_id, e.start_time, e.thumbnail_url,
+               (${scoreExpr}) as score
+        FROM event e
+        LEFT JOIN venue v ON e.venue_id = v.id
+        LEFT JOIN performer p ON LOWER(split_part(e.name, ' @ ', 1)) = LOWER(p.name)
+      `;
+      // Require minimum relevance
+      conditions.push(`(${scoreExpr}) > 0.15`);
+    } else {
+      neonQuery = `
+        SELECT e.id, e.name, e.event_type, e.venue_id, e.start_time, e.thumbnail_url,
+               0 as score
+        FROM event e
+      `;
+    }
+
+    // Event type filter (supports comma-separated multi-select)
     if (eventType) {
       const types = eventType.split(',').filter(Boolean).map(t => `'${t.replace(/'/g, "''")}'`);
       if (types.length === 1) {
@@ -119,10 +154,17 @@ export async function searchEvents(
         conditions.push(`e.event_type IN (${types.join(',')})`);
       }
     }
-    // Only show future events
+
+    // Only future events
     conditions.push(`(e.start_time IS NULL OR e.start_time > NOW() - INTERVAL '1 day')`);
     if (conditions.length > 0) neonQuery += ` WHERE ${conditions.join(' AND ')}`;
-    neonQuery += ` ORDER BY e.start_time ASC NULLS LAST LIMIT ${limit}`;
+
+    // Sort by relevance when searching, by date otherwise
+    if (query) {
+      neonQuery += ` ORDER BY score DESC, e.start_time ASC NULLS LAST LIMIT ${limit}`;
+    } else {
+      neonQuery += ` ORDER BY e.start_time ASC NULLS LAST LIMIT ${limit}`;
+    }
 
     const { rows } = await sql.query(neonQuery);
     if (rows.length > 0) {
@@ -149,7 +191,7 @@ export async function searchEvents(
       } catch { /* AWS unavailable, Neon-only is fine */ }
       return neonEvents.slice(0, limit);
     }
-  } catch { /* Neon tables may not exist, fall through */ }
+  } catch (err) { console.error('Neon search error:', err); /* fall through */ }
 
   // Fallback to AWS API
   const params: Record<string, string> = { limit: String(limit) };

@@ -10,6 +10,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
+  Scatter,
+  ComposedChart,
 } from "recharts";
 
 interface Bid {
@@ -17,6 +19,16 @@ interface Bid {
   bid_timestamp: string;
   bid_amount: number;
   bidder_name?: string;
+}
+
+interface FlashBid {
+  id: string;
+  ticket_id: string;
+  offer_amount: number;
+  bidder_name: string;
+  status: string;
+  expires_at: string;
+  created_at: string;
 }
 
 interface AuctionDetail {
@@ -74,13 +86,21 @@ function estimateFairValue(bids: Bid[], reservePrice: number, buyItNowPrice: num
 function ChartTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const data = payload[0].payload;
+  const amount = data.flash_amount ?? data.bid_amount;
+  if (amount == null) return null;
+  const isFlash = data.isFlash;
   return (
-    <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px 14px' }}>
+    <div style={{ backgroundColor: 'var(--bg-card)', border: `1px solid ${isFlash ? 'var(--amber)' : 'var(--border)'}`, borderRadius: '8px', padding: '10px 14px' }}>
       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
         {data.timeLabel}
       </p>
-      <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-        ${data.bid_amount.toFixed(2)}
+      {isFlash && (
+        <p style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--amber)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>
+          ⚡ Flash Bid
+        </p>
+      )}
+      <p style={{ fontSize: '0.875rem', fontWeight: 600, color: isFlash ? 'var(--amber)' : 'var(--text-primary)' }}>
+        ${amount.toFixed(2)}
       </p>
       {data.bidder && (
         <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
@@ -96,14 +116,25 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [flashBids, setFlashBids] = useState<FlashBid[]>([]);
+
   useEffect(() => {
     async function fetchAuction() {
       try {
-        const res = await fetch(`/api/auctions?ticket_id=${ticketId}`);
-        if (!res.ok) throw new Error("Failed to fetch");
-        const data = await res.json();
+        const [auctionRes, flashRes] = await Promise.all([
+          fetch(`/api/auctions?ticket_id=${ticketId}`),
+          fetch(`/api/offers?ticket_id=${ticketId}`),
+        ]);
+        if (!auctionRes.ok) throw new Error("Failed to fetch");
+        const data = await auctionRes.json();
         if (data.length > 0) {
           setAuction(data[0]);
+        }
+        if (flashRes.ok) {
+          const offers = await flashRes.json();
+          // Only show pending flash bids that haven't expired
+          const pending = (offers || []).filter((o: FlashBid) => o.status === "pending" && new Date(o.expires_at) > new Date());
+          setFlashBids(pending);
         }
       } catch {
         setError("Failed to load auction data");
@@ -135,33 +166,53 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
     (a, b) => new Date(a.bid_timestamp).getTime() - new Date(b.bid_timestamp).getTime()
   );
 
-  // Chart data
-  const chartData = sortedBids.map((bid) => ({
+  // Chart data — merge regular bids + pending flash bids
+  const regularChartData = sortedBids.map((bid) => ({
     time: new Date(bid.bid_timestamp).getTime(),
     timeLabel: formatTime(bid.bid_timestamp),
     bid_amount: bid.bid_amount,
+    flash_amount: null as number | null,
     bidder: bid.bidder_name || "Anonymous",
+    isFlash: false,
   }));
 
+  const flashChartData = flashBids.map((fb) => ({
+    time: new Date(fb.created_at).getTime(),
+    timeLabel: formatTime(fb.created_at),
+    bid_amount: null as number | null,
+    flash_amount: parseFloat(String(fb.offer_amount)),
+    bidder: fb.bidder_name || "Anonymous",
+    isFlash: true,
+  }));
+
+  const chartData = [...regularChartData, ...flashChartData].sort((a, b) => a.time - b.time);
+
   // Stats
-  const totalBids = bids.length;
-  const uniqueBidders = new Set(bids.map((b) => b.bidder_name || b.auction_item_id)).size;
+  const totalBids = bids.length + flashBids.length;
+  const uniqueBidders = new Set([
+    ...bids.map((b) => b.bidder_name || b.auction_item_id),
+    ...flashBids.map((fb) => fb.bidder_name),
+  ]).size;
   const highestBid = bids.length > 0 ? Math.max(...bids.map((b) => b.bid_amount)) : 0;
   const reserve = reservePrice ?? auction.reserve_price;
   const bin = buyItNowPrice ?? auction.buy_it_now_price;
   const fairValue = estimateFairValue(bids, reserve, bin);
 
-  // Y-axis domain
-  const yMin = bids.length > 0 ? Math.floor(Math.min(...bids.map(b => b.bid_amount)) * 0.9) : 0;
+  // Y-axis domain — include flash bid amounts
+  const allAmounts = [
+    ...bids.map(b => b.bid_amount),
+    ...flashBids.map(fb => parseFloat(String(fb.offer_amount))),
+  ];
+  const yMin = allAmounts.length > 0 ? Math.floor(Math.min(...allAmounts) * 0.9) : 0;
   const yMax = Math.ceil(bin * 1.05);
 
   return (
     <div style={{ padding: '16px 0 0' }}>
       {/* Chart */}
-      {bids.length > 0 ? (
+      {(bids.length > 0 || flashBids.length > 0) ? (
         <div style={{ width: '100%', height: '200px' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+            <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <defs>
                 <linearGradient id={`bidGradient-${ticketId}`} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#6366f1" stopOpacity={0.3} />
@@ -237,8 +288,23 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
                   stroke: '#fff',
                   strokeWidth: 2,
                 }}
+                connectNulls={false}
               />
-            </AreaChart>
+              <Scatter
+                dataKey="flash_amount"
+                fill="var(--amber)"
+                shape={(props: any) => {
+                  const { cx, cy } = props;
+                  if (cx == null || cy == null) return null;
+                  return (
+                    <g>
+                      <circle cx={cx} cy={cy} r={6} fill="var(--amber)" opacity={0.25} />
+                      <circle cx={cx} cy={cy} r={4} fill="var(--amber)" stroke="var(--bg-secondary)" strokeWidth={2} />
+                    </g>
+                  );
+                }}
+              />
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
       ) : (
@@ -319,7 +385,7 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
       </div>
 
       {/* Bid history table */}
-      {bids.length > 0 && (
+      {(bids.length > 0 || flashBids.length > 0) && (
         <div style={{ marginTop: '16px' }}>
           <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>
             Bid History
@@ -334,6 +400,21 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
                 </tr>
               </thead>
               <tbody>
+                {/* Flash bids first */}
+                {flashBids.map((fb) => (
+                  <tr key={`flash-${fb.id}`} style={{ borderBottom: '1px solid var(--border)', backgroundColor: 'rgba(245, 158, 11, 0.05)' }}>
+                    <td style={{ padding: '8px 12px', fontSize: '0.8rem', color: 'var(--amber)' }}>
+                      ⚡ {fb.bidder_name || "Anonymous"}
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right', fontSize: '0.8rem', fontWeight: 600, color: 'var(--amber)', fontVariantNumeric: 'tabular-nums' }}>
+                      ${parseFloat(String(fb.offer_amount)).toFixed(2)}
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      {formatTime(fb.created_at)}
+                    </td>
+                  </tr>
+                ))}
+                {/* Regular bids */}
                 {[...sortedBids].reverse().map((bid, i) => (
                   <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
                     <td style={{ padding: '8px 12px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>

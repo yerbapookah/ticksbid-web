@@ -1,6 +1,6 @@
 "use client";
 
-import { VenueLayout, SectionDef, getVenueLayout, generateGenericLayout } from "@/lib/venueLayouts";
+import { VenueLayout, SectionDef, VenueType, getVenueLayout, generateGenericLayout } from "@/lib/venueLayouts";
 
 interface SeatInfo {
   ticketId: string;
@@ -14,12 +14,14 @@ interface SeatingChartProps {
   seats: SeatInfo[];
   selectedTicketId: string | null;
   onSeatClick: (ticketId: string | null) => void;
+  eventType?: string;
+  layoutType?: VenueType | null;
 }
 
-export default function SeatingChart({ venueName, seats, selectedTicketId, onSeatClick }: SeatingChartProps) {
-  // Get venue layout or generate generic one
+export default function SeatingChart({ venueName, seats, selectedTicketId, onSeatClick, eventType, layoutType }: SeatingChartProps) {
+  // Get venue layout — auto-classifies by name + event type, or uses stored layout type
   const uniqueSections = [...new Set(seats.map((s) => s.section))];
-  const layout: VenueLayout = getVenueLayout(venueName) ?? generateGenericLayout(uniqueSections);
+  const layout: VenueLayout = getVenueLayout(venueName, eventType, layoutType);
 
   // Build lookup: section → tickets in that section
   const sectionTickets: Record<string, SeatInfo[]> = {};

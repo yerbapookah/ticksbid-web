@@ -24,10 +24,14 @@ export default function EventTicketsView({
   tickets,
   eventName,
   venueName,
+  eventType,
+  layoutType,
 }: {
   tickets: TicketData[];
   eventName: string;
   venueName?: string;
+  eventType?: string;
+  layoutType?: string | null;
 }) {
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const ticketRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -63,6 +67,8 @@ export default function EventTicketsView({
             seats={seats}
             selectedTicketId={selectedTicketId}
             onSeatClick={handleSeatClick}
+            eventType={eventType}
+            layoutType={layoutType as any}
           />
         </div>
       )}

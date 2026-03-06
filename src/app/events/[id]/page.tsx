@@ -2,6 +2,7 @@ import { getEvent, getTicketsWithAuctions, type TicketWithAuction } from "@/lib/
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import EventTicketsView from "@/components/EventTicketsView";
+import SeatingChart from "@/components/SeatingChart";
 import Countdown from "@/components/AuctionCountdown";
 
 function formatDate(dateStr: string) {
@@ -113,6 +114,20 @@ export default async function EventDetailPage({
           {hasTickets ? (
             <EventTicketsView tickets={ticketsWithAuctions} eventName={event.name} venueName={event.venue?.name} eventType={event.event_type} layoutType={event.venue?.layout_type} layoutJson={event.venue?.layout_json} />
           ) : (
+            <div>
+              {event.venue?.name && (
+                <div className="mb-4">
+                  <SeatingChart
+                    venueName={event.venue.name}
+                    seats={[]}
+                    selectedTicketId={null}
+                    onSeatClick={() => {}}
+                    eventType={event.event_type}
+                    layoutType={event.venue?.layout_type as any}
+                    layoutJson={event.venue?.layout_json}
+                  />
+                </div>
+              )}
             <div className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--bg-secondary)] p-12 text-center">
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-[var(--bg-card)]">
                 <svg className="h-7 w-7 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -134,6 +149,7 @@ export default async function EventDetailPage({
                 </svg>
                 List Tickets
               </Link>
+            </div>
             </div>
           )}
         </div>

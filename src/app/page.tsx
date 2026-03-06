@@ -89,7 +89,7 @@ function HeroBanner() {
               <div className="h-1.5 w-1.5 rounded-full bg-[var(--green)] animate-pulse" />
               <span className="text-xs font-medium text-[var(--accent-hover)]">Zero buyer fees — always</span>
             </div>
-            <h1 className="mb-3 sm:mb-4 text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl md:text-5xl">
+            <h1 className="display-heading mb-3 sm:mb-4 text-3xl sm:text-5xl md:text-6xl text-[var(--text-primary)]">
               Tickets for humans<br />
               <span className="text-[var(--text-muted)]">and their agents</span>
             </h1>

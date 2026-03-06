@@ -113,7 +113,7 @@ function Footer() {
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-[1fr_160px_160px_60px] lg:grid-cols-[1fr_160px_160px_160px_60px]">
           {/* Tagline + logo */}
           <div className="flex flex-col gap-4 sm:gap-5 sm:col-span-2 md:col-span-1">
-            <p className="text-xl sm:text-2xl font-bold leading-snug text-[var(--text-primary)]">
+            <p className="display-heading text-2xl sm:text-3xl leading-snug text-[var(--text-primary)]">
               Stop overpaying.<br />Start bidding.
             </p>
             <div className="flex items-center gap-2.5">
@@ -170,6 +170,11 @@ function Footer() {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+      </head>
       <body>
         <AuthProvider>
           <FavoritesProvider>

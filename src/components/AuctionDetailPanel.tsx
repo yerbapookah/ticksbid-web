@@ -198,7 +198,7 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
     <div style={{ padding: '16px 0 0' }}>
       {/* Chart */}
       {(bids.length > 0 || flashBids.length > 0) ? (
-        <div style={{ width: '100%', height: '200px' }}>
+        <div className="chart-panel anim-chart" style={{ width: '100%', height: '224px' }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <defs>
@@ -307,62 +307,35 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
       )}
 
       {/* Stats row */}
-      <div style={{
+      <div className="anim-stats" style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr 1fr',
         gap: '12px',
         marginTop: '16px',
       }}>
-        <div style={{
-          padding: '12px',
-          borderRadius: '8px',
-          backgroundColor: 'var(--bg-card)',
-          border: '1px solid var(--border)',
-          textAlign: 'center',
-          display: 'flex',
-          flexDirection: 'column' as const,
-          justifyContent: 'space-between',
-        }}>
+        <div className="stat-glass">
           <p style={{ fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '4px' }}>
             Total Bids
           </p>
-          <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: 'auto' }}>
+          <p style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: 'auto' }}>
             {totalBids}
           </p>
         </div>
 
-        <div style={{
-          padding: '12px',
-          borderRadius: '8px',
-          backgroundColor: 'var(--bg-card)',
-          border: '1px solid var(--border)',
-          textAlign: 'center',
-          display: 'flex',
-          flexDirection: 'column' as const,
-          justifyContent: 'space-between',
-        }}>
+        <div className="stat-glass">
           <p style={{ fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '4px' }}>
             Unique Bidders
           </p>
-          <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: 'auto' }}>
+          <p style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: 'auto' }}>
             {uniqueBidders}
           </p>
         </div>
 
-        <div style={{
-          padding: '12px',
-          borderRadius: '8px',
-          backgroundColor: 'var(--bg-card)',
-          border: '1px solid var(--border)',
-          textAlign: 'center',
-          display: 'flex',
-          flexDirection: 'column' as const,
-          justifyContent: 'space-between',
-        }}>
+        <div className="stat-glass">
           <p style={{ fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '4px' }}>
             Est. Fair Value
           </p>
-          <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent)', marginTop: 'auto' }}>
+          <p style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--accent)', marginTop: 'auto' }}>
             ${fairValue.toFixed(2)}
           </p>
         </div>
@@ -370,7 +343,7 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
 
       {/* Bid history table */}
       {(bids.length > 0 || flashBids.length > 0) && (
-        <div style={{ marginTop: '16px' }}>
+        <div className="anim-history" style={{ marginTop: '16px' }}>
           <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>
             Bid History
           </p>

@@ -59,13 +59,102 @@ body::before {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
 
+/* ── Display font for hero / section headings ── */
+.display-heading {
+  font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* ── Glow border cards ── */
 .event-card {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+.event-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, transparent 40%, rgba(99, 102, 241, 0.0) 50%, transparent 60%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  transition: all 0.3s ease;
+  pointer-events: none;
 }
 .event-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.08);
+  transform: translateY(-3px);
+  box-shadow:
+    0 8px 32px rgba(99, 102, 241, 0.1),
+    0 0 0 1px rgba(99, 102, 241, 0.15);
 }
+.event-card:hover::before {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.4) 0%, rgba(129, 140, 248, 0.2) 50%, rgba(99, 102, 241, 0.4) 100%);
+}
+
+/* ── Chart panel frame ── */
+.chart-panel {
+  background: rgba(6, 6, 10, 0.6);
+  border: 1px solid rgba(26, 26, 48, 0.8);
+  border-radius: 12px;
+  padding: 16px 12px 12px;
+  position: relative;
+  overflow: hidden;
+}
+.chart-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.3), transparent);
+}
+
+/* ── Glassmorphism stat boxes ── */
+.stat-glass {
+  background: linear-gradient(135deg, rgba(16, 16, 28, 0.8), rgba(22, 22, 42, 0.4));
+  border: 1px solid rgba(26, 26, 48, 0.9);
+  border-radius: 12px;
+  padding: 14px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+}
+.stat-glass:hover {
+  border-color: rgba(99, 102, 241, 0.25);
+}
+.stat-glass::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.2), transparent);
+}
+
+/* ── Staggered entrance animations ── */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.anim-chart { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both; }
+.anim-stats { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both; }
+.anim-history { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both; }
 
 .badge {
   font-size: 0.68rem;

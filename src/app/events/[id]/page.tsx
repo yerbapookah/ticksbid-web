@@ -120,6 +120,7 @@ export default async function EventDetailPage({
                   <SeatingChartPreview
                     venueName={event.venue.name}
                     eventType={event.event_type}
+                    layoutJson={event.venue?.layout_json}
                   />
                 </div>
               )}

@@ -241,8 +241,12 @@ export async function getEvent(id: string): Promise<Event> {
           address: r.venue_address || '',
           venue_type: r.venue_type || '',
           max_capacity: r.max_capacity || 0,
-          layout_type: null,
-          layout_json: null,
+          ...await (async () => {
+            try {
+              const { rows: vr } = await sql`SELECT layout_type, layout_json FROM venue WHERE id = ${r.venue_id}::uuid LIMIT 1`;
+              return { layout_type: vr[0]?.layout_type || null, layout_json: vr[0]?.layout_json || null };
+            } catch { return { layout_type: null, layout_json: null }; }
+          })(),
         },
         tickets,
       };

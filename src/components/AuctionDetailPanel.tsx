@@ -168,18 +168,27 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
   // Chart data — merge regular bids + pending flash bids with connecting orange lines
   const highestRegularBid = sortedBids.length > 0 ? sortedBids[sortedBids.length - 1].bid_amount : 0;
 
-  const regularChartData = sortedBids.map((bid) => ({
+  interface ChartPoint {
+    time: number;
+    timeLabel: string;
+    bid_amount: number | null;
+    flash_line: number | null;
+    bidder: string;
+    isFlash: boolean;
+  }
+
+  const regularChartData: ChartPoint[] = sortedBids.map((bid) => ({
     time: new Date(bid.bid_timestamp).getTime(),
     timeLabel: formatTime(bid.bid_timestamp),
     bid_amount: bid.bid_amount,
-    flash_line: null as number | null,
+    flash_line: null,
     bidder: bid.bidder_name || "Anonymous",
     isFlash: false,
   }));
 
   // For each flash bid, insert two points: one at the highest regular bid level (connection point)
   // and one at the flash bid amount — this draws an orange line up from current bid to flash bid
-  const flashPoints: typeof regularChartData = [];
+  const flashPoints: ChartPoint[] = [];
   for (const fb of flashBids) {
     const fbTime = new Date(fb.created_at).getTime();
     const fbAmount = parseFloat(String(fb.offer_amount));
@@ -187,7 +196,7 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
     flashPoints.push({
       time: fbTime - 1000, // 1 second before
       timeLabel: formatTime(fb.created_at),
-      bid_amount: null as number | null,
+      bid_amount: null,
       flash_line: highestRegularBid,
       bidder: fb.bidder_name || "Anonymous",
       isFlash: true,
@@ -196,7 +205,7 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
     flashPoints.push({
       time: fbTime,
       timeLabel: formatTime(fb.created_at),
-      bid_amount: null as number | null,
+      bid_amount: null,
       flash_line: fbAmount,
       bidder: fb.bidder_name || "Anonymous",
       isFlash: true,

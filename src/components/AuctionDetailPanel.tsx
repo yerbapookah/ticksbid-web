@@ -186,17 +186,25 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
     isFlash: false,
   }));
 
-  // Anchor flash line on the last regular bid point, then draw up to flash bid
-  if (flashBids.length > 0 && regularChartData.length > 0) {
-    // Set flash_line on the last regular bid so the orange line starts there
-    regularChartData[regularChartData.length - 1].flash_line = highestRegularBid;
-  }
+  const chartData: ChartPoint[] = [...regularChartData];
 
-  const flashPoints: ChartPoint[] = [];
+  // For flash bids: add a vertical connector from last bid up to flash price,
+  // then a horizontal line extending to expiry time
   for (const fb of flashBids) {
     const fbTime = new Date(fb.created_at).getTime();
+    const fbExpiry = new Date(fb.expires_at).getTime();
     const fbAmount = parseFloat(String(fb.offer_amount));
-    flashPoints.push({
+    // Vertical rise: start at current bid level
+    chartData.push({
+      time: fbTime - 500,
+      timeLabel: formatTime(fb.created_at),
+      bid_amount: null,
+      flash_line: highestRegularBid,
+      bidder: fb.bidder_name || "Anonymous",
+      isFlash: false, // no dot on connector
+    });
+    // Top of the rise
+    chartData.push({
       time: fbTime,
       timeLabel: formatTime(fb.created_at),
       bid_amount: null,
@@ -204,9 +212,19 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
       bidder: fb.bidder_name || "Anonymous",
       isFlash: true,
     });
+    // Horizontal hold to midpoint (shows the flash bid is active)
+    const holdTime = fbTime + (fbExpiry - fbTime) * 0.5;
+    chartData.push({
+      time: holdTime,
+      timeLabel: 'Expires ' + formatTime(fb.expires_at),
+      bid_amount: null,
+      flash_line: fbAmount,
+      bidder: fb.bidder_name || "Anonymous",
+      isFlash: true,
+    });
   }
 
-  const chartData = [...regularChartData, ...flashPoints].sort((a, b) => a.time - b.time);
+  chartData.sort((a, b) => a.time - b.time);
 
   // Stats
   const totalBids = bids.length + flashBids.length;
@@ -238,6 +256,10 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
                 <linearGradient id={`bidGradient-${ticketId}`} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#6366f1" stopOpacity={0.3} />
                   <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id={`flashGradient-${ticketId}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.2} />
+                  <stop offset="100%" stopColor="#f59e0b" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid
@@ -312,28 +334,28 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
                 connectNulls={false}
               />
               <Area
-                type="stepAfter"
+                type="linear"
                 dataKey="flash_line"
-                stroke="var(--amber)"
+                stroke="#f59e0b"
                 strokeWidth={2}
-                fill="none"
+                fill={`url(#flashGradient-${ticketId})`}
                 dot={(props: any) => {
                   const { cx, cy, payload } = props;
                   if (cx == null || cy == null || payload.flash_line == null) return <g />;
-                  // Only show dot on the actual flash bid point, not the connection point
-                  if (payload.flash_line === highestRegularBid && !payload.isFlash) return <g />;
-                  const isConnectionPoint = Math.abs(payload.flash_line - highestRegularBid) < 0.01;
-                  if (isConnectionPoint) return <g />;
+                  if (!payload.isFlash) return <g />;
                   return (
                     <g key={`flash-${cx}-${cy}`}>
-                      <circle cx={cx} cy={cy} r={7} fill="var(--amber)" opacity={0.2} />
-                      <circle cx={cx} cy={cy} r={4} fill="var(--amber)" stroke="var(--bg-secondary)" strokeWidth={2} />
+                      <circle cx={cx} cy={cy} r={8} fill="#f59e0b" opacity={0.15}>
+                        <animate attributeName="r" values="8;12;8" dur="2s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" values="0.15;0.05;0.15" dur="2s" repeatCount="indefinite" />
+                      </circle>
+                      <circle cx={cx} cy={cy} r={5} fill="#f59e0b" stroke="#1a1a2e" strokeWidth={2} />
                     </g>
                   );
                 }}
                 activeDot={{
-                  r: 6,
-                  fill: 'var(--amber)',
+                  r: 7,
+                  fill: '#f59e0b',
                   stroke: '#fff',
                   strokeWidth: 2,
                 }}

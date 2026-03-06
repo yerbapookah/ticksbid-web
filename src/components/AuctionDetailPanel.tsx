@@ -312,11 +312,10 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
                 connectNulls={false}
               />
               <Area
-                type="linear"
+                type="stepAfter"
                 dataKey="flash_line"
                 stroke="var(--amber)"
                 strokeWidth={2}
-                strokeDasharray="4 3"
                 fill="none"
                 dot={(props: any) => {
                   const { cx, cy, payload } = props;

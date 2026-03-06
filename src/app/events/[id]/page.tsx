@@ -2,7 +2,7 @@ import { getEvent, getTicketsWithAuctions, type TicketWithAuction } from "@/lib/
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import EventTicketsView from "@/components/EventTicketsView";
-import SeatingChart from "@/components/SeatingChart";
+import SeatingChartPreview from "@/components/SeatingChartPreview";
 import Countdown from "@/components/AuctionCountdown";
 
 function formatDate(dateStr: string) {
@@ -117,11 +117,8 @@ export default async function EventDetailPage({
             <div>
               {event.venue?.name && (
                 <div className="mb-4">
-                  <SeatingChart
+                  <SeatingChartPreview
                     venueName={event.venue.name}
-                    seats={[]}
-                    selectedTicketId={null}
-                    onSeatClick={() => {}}
                     eventType={event.event_type}
                   />
                 </div>

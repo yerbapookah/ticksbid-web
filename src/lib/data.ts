@@ -103,6 +103,48 @@ export async function searchEvents(
   eventType?: string,
   limit = 20
 ): Promise<EventSummary[]> {
+  // Try Neon first (pipeline-promoted events)
+  try {
+    let neonQuery = `
+      SELECT e.id, e.name, e.event_type, e.venue_id, e.start_time, e.thumbnail_url
+      FROM event e
+    `;
+    const conditions: string[] = [];
+    if (query) conditions.push(`e.name ILIKE '%${query.replace(/'/g, "''")}%'`);
+    if (eventType) conditions.push(`e.event_type = '${eventType.replace(/'/g, "''")}' `);
+    // Only show future events
+    conditions.push(`(e.start_time IS NULL OR e.start_time > NOW() - INTERVAL '1 day')`);
+    if (conditions.length > 0) neonQuery += ` WHERE ${conditions.join(' AND ')}`;
+    neonQuery += ` ORDER BY e.start_time ASC NULLS LAST LIMIT ${limit}`;
+
+    const { rows } = await sql.query(neonQuery);
+    if (rows.length > 0) {
+      const neonEvents: EventSummary[] = rows.map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        event_type: r.event_type || 'concert',
+        venue_id: r.venue_id,
+        start_time: r.start_time,
+        thumbnail_url: r.thumbnail_url,
+      }));
+      // Also fetch from AWS and merge (dedup by name+date)
+      try {
+        const params: Record<string, string> = { limit: String(limit) };
+        if (query) params.q = query;
+        if (eventType) params.event_type = eventType;
+        const awsEvents = await apiGet<EventSummary[]>("/events", params);
+        const seen = new Set(neonEvents.map(e => e.name + (e.start_time || '')));
+        for (const ae of awsEvents) {
+          if (!seen.has(ae.name + (ae.start_time || ''))) {
+            neonEvents.push(ae);
+          }
+        }
+      } catch { /* AWS unavailable, Neon-only is fine */ }
+      return neonEvents.slice(0, limit);
+    }
+  } catch { /* Neon tables may not exist, fall through */ }
+
+  // Fallback to AWS API
   const params: Record<string, string> = { limit: String(limit) };
   if (query) params.q = query;
   if (eventType) params.event_type = eventType;
@@ -110,6 +152,48 @@ export async function searchEvents(
 }
 
 export async function getEvent(id: string): Promise<Event> {
+  // Try Neon first
+  try {
+    const { rows } = await sql`
+      SELECT e.id, e.name, e.event_type, e.venue_id, e.start_time, e.thumbnail_url, e.event_url,
+             v.name as venue_name, v.address as venue_address, v.venue_type, v.max_capacity
+      FROM event e
+      LEFT JOIN venue v ON e.venue_id = v.id
+      WHERE e.id = ${id}::uuid
+      LIMIT 1
+    `;
+    if (rows.length > 0) {
+      const r = rows[0];
+      // Get tickets for this event from Neon (if any)
+      let tickets: Ticket[] = [];
+      try {
+        const { rows: ticketRows } = await sql`
+          SELECT id, event_id, seat_section, seat_row, seat_number, ticket_type
+          FROM tickets WHERE event_id = ${id}::uuid
+        `;
+        tickets = ticketRows as Ticket[];
+      } catch { /* no tickets table or no tickets */ }
+      return {
+        id: r.id,
+        name: r.name,
+        event_type: r.event_type || 'concert',
+        venue_id: r.venue_id,
+        start_time: r.start_time,
+        thumbnail_url: r.thumbnail_url,
+        event_url: r.event_url,
+        venue: {
+          id: r.venue_id || '',
+          name: r.venue_name || '',
+          address: r.venue_address || '',
+          venue_type: r.venue_type || '',
+          max_capacity: r.max_capacity || 0,
+        },
+        tickets,
+      };
+    }
+  } catch { /* fall through */ }
+
+  // Fallback to AWS
   return apiGet<Event>(`/events/${id}`);
 }
 

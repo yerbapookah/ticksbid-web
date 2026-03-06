@@ -10,7 +10,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-  ComposedChart,
 } from "recharts";
 
 interface Bid {
@@ -85,21 +84,13 @@ function estimateFairValue(bids: Bid[], reservePrice: number, buyItNowPrice: num
 function ChartTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const data = payload[0].payload;
-  const amount = data.flash_line ?? data.bid_amount;
-  if (amount == null) return null;
-  const isFlash = data.isFlash;
   return (
-    <div style={{ backgroundColor: 'var(--bg-card)', border: `1px solid ${isFlash ? 'var(--amber)' : 'var(--border)'}`, borderRadius: '8px', padding: '10px 14px' }}>
+    <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px 14px' }}>
       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
         {data.timeLabel}
       </p>
-      {isFlash && (
-        <p style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--amber)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>
-          ⚡ Flash Bid
-        </p>
-      )}
-      <p style={{ fontSize: '0.875rem', fontWeight: 600, color: isFlash ? 'var(--amber)' : 'var(--text-primary)' }}>
-        ${amount.toFixed(2)}
+      <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+        ${data.bid_amount.toFixed(2)}
       </p>
       {data.bidder && (
         <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
@@ -165,65 +156,15 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
     (a, b) => new Date(a.bid_timestamp).getTime() - new Date(b.bid_timestamp).getTime()
   );
 
-  // Chart data — merge regular bids + pending flash bids with connecting orange lines
-  const highestRegularBid = sortedBids.length > 0 ? sortedBids[sortedBids.length - 1].bid_amount : 0;
-
-  interface ChartPoint {
-    time: number;
-    timeLabel: string;
-    bid_amount: number | null;
-    flash_line: number | null;
-    bidder: string;
-    isFlash: boolean;
-  }
-
-  const regularChartData: ChartPoint[] = sortedBids.map((bid) => ({
+  // Chart data
+  const regularChartData = sortedBids.map((bid) => ({
     time: new Date(bid.bid_timestamp).getTime(),
     timeLabel: formatTime(bid.bid_timestamp),
     bid_amount: bid.bid_amount,
-    flash_line: null,
     bidder: bid.bidder_name || "Anonymous",
-    isFlash: false,
   }));
 
-  const chartData: ChartPoint[] = [...regularChartData];
-
-  // For flash bids: add a vertical connector from last bid up to flash price,
-  // then a horizontal line extending to expiry time
-  for (const fb of flashBids) {
-    const fbTime = new Date(fb.created_at).getTime();
-    const fbExpiry = new Date(fb.expires_at).getTime();
-    const fbAmount = parseFloat(String(fb.offer_amount));
-    // Vertical rise: start at current bid level
-    chartData.push({
-      time: fbTime - 500,
-      timeLabel: formatTime(fb.created_at),
-      bid_amount: null,
-      flash_line: highestRegularBid,
-      bidder: fb.bidder_name || "Anonymous",
-      isFlash: false, // no dot on connector
-    });
-    // Top of the rise
-    chartData.push({
-      time: fbTime,
-      timeLabel: formatTime(fb.created_at),
-      bid_amount: null,
-      flash_line: fbAmount,
-      bidder: fb.bidder_name || "Anonymous",
-      isFlash: true,
-    });
-    // Horizontal hold to midpoint (shows the flash bid is active)
-    const holdTime = fbTime + (fbExpiry - fbTime) * 0.5;
-    chartData.push({
-      time: holdTime,
-      timeLabel: 'Expires ' + formatTime(fb.expires_at),
-      bid_amount: null,
-      flash_line: fbAmount,
-      bidder: fb.bidder_name || "Anonymous",
-      isFlash: true,
-    });
-  }
-
+  const chartData = [...regularChartData];
   chartData.sort((a, b) => a.time - b.time);
 
   // Stats
@@ -251,16 +192,13 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
       {(bids.length > 0 || flashBids.length > 0) ? (
         <div style={{ width: '100%', height: '200px' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+            <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <defs>
                 <linearGradient id={`bidGradient-${ticketId}`} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#6366f1" stopOpacity={0.3} />
                   <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
                 </linearGradient>
-                <linearGradient id={`flashGradient-${ticketId}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.2} />
-                  <stop offset="100%" stopColor="#f59e0b" stopOpacity={0} />
-                </linearGradient>
+
               </defs>
               <CartesianGrid
                 strokeDasharray="3 3"
@@ -333,35 +271,24 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
                 }}
                 connectNulls={false}
               />
-              <Area
-                type="linear"
-                dataKey="flash_line"
-                stroke="#f59e0b"
-                strokeWidth={2}
-                fill={`url(#flashGradient-${ticketId})`}
-                dot={(props: any) => {
-                  const { cx, cy, payload } = props;
-                  if (cx == null || cy == null || payload.flash_line == null) return <g />;
-                  if (!payload.isFlash) return <g />;
-                  return (
-                    <g key={`flash-${cx}-${cy}`}>
-                      <circle cx={cx} cy={cy} r={8} fill="#f59e0b" opacity={0.15}>
-                        <animate attributeName="r" values="8;12;8" dur="2s" repeatCount="indefinite" />
-                        <animate attributeName="opacity" values="0.15;0.05;0.15" dur="2s" repeatCount="indefinite" />
-                      </circle>
-                      <circle cx={cx} cy={cy} r={5} fill="#f59e0b" stroke="#1a1a2e" strokeWidth={2} />
-                    </g>
-                  );
-                }}
-                activeDot={{
-                  r: 7,
-                  fill: '#f59e0b',
-                  stroke: '#fff',
-                  strokeWidth: 2,
-                }}
-                connectNulls={false}
-              />
-            </ComposedChart>
+              {/* Flash bid reference lines */}
+              {flashBids.map((fb) => (
+                <ReferenceLine
+                  key={fb.id}
+                  y={parseFloat(String(fb.offer_amount))}
+                  stroke="#f59e0b"
+                  strokeWidth={1.5}
+                  strokeDasharray="6 3"
+                  label={{
+                    value: `⚡ Flash Bid ${parseFloat(String(fb.offer_amount)).toFixed(0)}`,
+                    position: "insideBottomRight",
+                    fill: "#f59e0b",
+                    fontSize: 10,
+                    fontWeight: 600,
+                  }}
+                />
+              ))}
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       ) : (

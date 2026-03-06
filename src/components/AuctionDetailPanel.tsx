@@ -186,22 +186,16 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
     isFlash: false,
   }));
 
-  // For each flash bid, insert two points: one at the highest regular bid level (connection point)
-  // and one at the flash bid amount — this draws an orange line up from current bid to flash bid
+  // Anchor flash line on the last regular bid point, then draw up to flash bid
+  if (flashBids.length > 0 && regularChartData.length > 0) {
+    // Set flash_line on the last regular bid so the orange line starts there
+    regularChartData[regularChartData.length - 1].flash_line = highestRegularBid;
+  }
+
   const flashPoints: ChartPoint[] = [];
   for (const fb of flashBids) {
     const fbTime = new Date(fb.created_at).getTime();
     const fbAmount = parseFloat(String(fb.offer_amount));
-    // Connection point — just before the flash bid, at the highest regular bid level
-    flashPoints.push({
-      time: fbTime - 1000, // 1 second before
-      timeLabel: formatTime(fb.created_at),
-      bid_amount: null,
-      flash_line: highestRegularBid,
-      bidder: fb.bidder_name || "Anonymous",
-      isFlash: true,
-    });
-    // The flash bid point itself
     flashPoints.push({
       time: fbTime,
       timeLabel: formatTime(fb.created_at),

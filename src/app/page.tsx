@@ -2,6 +2,8 @@ import { searchEvents, getTicketCountsByEvent, type EventSummary } from "@/lib/d
 import Link from "next/link";
 import FavoriteButton from "@/components/FavoriteButton";
 import SortDropdown from "@/components/SortDropdown";
+import { Suspense } from "react";
+import ScrollToResults from "@/components/ScrollToResults";
 
 function EventTypeBadge({ type }: { type: string }) {
   const cls: Record<string, string> = {
@@ -202,9 +204,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
 
   return (
     <>
+      <Suspense fallback={null}><ScrollToResults /></Suspense>
       <HeroBanner />
       <div className="mx-auto max-w-7xl px-3 sm:px-6 py-6 sm:py-12">
-        <div className="mb-5 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div id="results" className="mb-5 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 scroll-mt-16">
           <div>
             <h2 className="text-xl font-semibold text-[var(--text-primary)]">
               {query ? `Results for "${query}"` : "All Events"}

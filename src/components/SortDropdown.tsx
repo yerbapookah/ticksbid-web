@@ -35,10 +35,14 @@ export default function SortDropdown({
         if (val) p.set("sort", val);
         router.push(`/?${p.toString()}`);
       }}
-      className="flex-shrink-0 rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-2.5 py-1.5 text-xs font-medium text-[var(--text-secondary)] outline-none cursor-pointer transition-all hover:border-[var(--border-hover)] hover:text-[var(--text-primary)] focus:border-[var(--accent)]/40"
+      className={`flex-shrink-0 rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap cursor-pointer outline-none transition-all ${
+        currentSort
+          ? "bg-[var(--accent)] text-white"
+          : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--border-hover)] hover:text-[var(--text-primary)]"
+      }`}
     >
       {SORT_OPTIONS.map((opt) => (
-        <option key={opt.value} value={opt.value}>
+        <option key={opt.value} value={opt.value} className="bg-[var(--bg-card)] text-[var(--text-primary)]">
           {opt.label}
         </option>
       ))}

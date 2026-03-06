@@ -156,16 +156,23 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
     (a, b) => new Date(a.bid_timestamp).getTime() - new Date(b.bid_timestamp).getTime()
   );
 
-  // Chart data
-  const regularChartData = sortedBids.map((bid) => ({
-    time: new Date(bid.bid_timestamp).getTime(),
-    timeLabel: formatTime(bid.bid_timestamp),
-    bid_amount: bid.bid_amount,
-    bidder: bid.bidder_name || "Anonymous",
-  }));
-
-  const chartData = [...regularChartData];
-  chartData.sort((a, b) => a.time - b.time);
+  // Chart data — regular bids + flash bids in one series
+  const chartData = [
+    ...sortedBids.map((bid) => ({
+      time: new Date(bid.bid_timestamp).getTime(),
+      timeLabel: formatTime(bid.bid_timestamp),
+      bid_amount: bid.bid_amount,
+      bidder: bid.bidder_name || "Anonymous",
+      isFlash: false,
+    })),
+    ...flashBids.map((fb) => ({
+      time: new Date(fb.created_at).getTime(),
+      timeLabel: formatTime(fb.created_at),
+      bid_amount: parseFloat(String(fb.offer_amount)),
+      bidder: fb.bidder_name || "Anonymous",
+      isFlash: true,
+    })),
+  ].sort((a, b) => a.time - b.time);
 
   // Stats
   const totalBids = bids.length + flashBids.length;
@@ -257,11 +264,20 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
                 stroke="#6366f1"
                 strokeWidth={2}
                 fill={`url(#bidGradient-${ticketId})`}
-                dot={{
-                  r: 4,
-                  fill: '#6366f1',
-                  stroke: 'var(--bg-secondary)',
-                  strokeWidth: 2,
+                dot={(props: any) => {
+                  const { cx, cy, payload } = props;
+                  if (cx == null || cy == null) return <g />;
+                  if (payload.isFlash) {
+                    return (
+                      <g key={`dot-${cx}-${cy}`}>
+                        <circle cx={cx} cy={cy} r={6} fill="#f59e0b" opacity={0.3} />
+                        <circle cx={cx} cy={cy} r={4} fill="#f59e0b" stroke="var(--bg-secondary)" strokeWidth={2} />
+                      </g>
+                    );
+                  }
+                  return (
+                    <circle key={`dot-${cx}-${cy}`} cx={cx} cy={cy} r={4} fill="#6366f1" stroke="var(--bg-secondary)" strokeWidth={2} />
+                  );
                 }}
                 activeDot={{
                   r: 6,
@@ -269,25 +285,8 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
                   stroke: '#fff',
                   strokeWidth: 2,
                 }}
-                connectNulls={false}
               />
-              {/* Flash bid reference lines */}
-              {flashBids.map((fb) => (
-                <ReferenceLine
-                  key={fb.id}
-                  y={parseFloat(String(fb.offer_amount))}
-                  stroke="#f59e0b"
-                  strokeWidth={1.5}
-                  strokeDasharray="6 3"
-                  label={{
-                    value: `⚡ Flash Bid ${parseFloat(String(fb.offer_amount)).toFixed(0)}`,
-                    position: "insideBottomRight",
-                    fill: "#f59e0b",
-                    fontSize: 10,
-                    fontWeight: 600,
-                  }}
-                />
-              ))}
+
             </AreaChart>
           </ResponsiveContainer>
         </div>

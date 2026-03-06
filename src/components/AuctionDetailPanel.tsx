@@ -85,7 +85,7 @@ function estimateFairValue(bids: Bid[], reservePrice: number, buyItNowPrice: num
 function ChartTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const data = payload[0].payload;
-  const amount = data.flash_amount ?? data.bid_amount;
+  const amount = data.flash_line ?? data.bid_amount;
   if (amount == null) return null;
   const isFlash = data.isFlash;
   return (
@@ -165,26 +165,45 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
     (a, b) => new Date(a.bid_timestamp).getTime() - new Date(b.bid_timestamp).getTime()
   );
 
-  // Chart data — merge regular bids + pending flash bids
+  // Chart data — merge regular bids + pending flash bids with connecting orange lines
+  const highestRegularBid = sortedBids.length > 0 ? sortedBids[sortedBids.length - 1].bid_amount : 0;
+
   const regularChartData = sortedBids.map((bid) => ({
     time: new Date(bid.bid_timestamp).getTime(),
     timeLabel: formatTime(bid.bid_timestamp),
     bid_amount: bid.bid_amount,
-    flash_amount: null as number | null,
+    flash_line: null as number | null,
     bidder: bid.bidder_name || "Anonymous",
     isFlash: false,
   }));
 
-  const flashChartData = flashBids.map((fb) => ({
-    time: new Date(fb.created_at).getTime(),
-    timeLabel: formatTime(fb.created_at),
-    bid_amount: null as number | null,
-    flash_amount: parseFloat(String(fb.offer_amount)),
-    bidder: fb.bidder_name || "Anonymous",
-    isFlash: true,
-  }));
+  // For each flash bid, insert two points: one at the highest regular bid level (connection point)
+  // and one at the flash bid amount — this draws an orange line up from current bid to flash bid
+  const flashPoints: typeof regularChartData = [];
+  for (const fb of flashBids) {
+    const fbTime = new Date(fb.created_at).getTime();
+    const fbAmount = parseFloat(String(fb.offer_amount));
+    // Connection point — just before the flash bid, at the highest regular bid level
+    flashPoints.push({
+      time: fbTime - 1000, // 1 second before
+      timeLabel: formatTime(fb.created_at),
+      bid_amount: null as number | null,
+      flash_line: highestRegularBid,
+      bidder: fb.bidder_name || "Anonymous",
+      isFlash: true,
+    });
+    // The flash bid point itself
+    flashPoints.push({
+      time: fbTime,
+      timeLabel: formatTime(fb.created_at),
+      bid_amount: null as number | null,
+      flash_line: fbAmount,
+      bidder: fb.bidder_name || "Anonymous",
+      isFlash: true,
+    });
+  }
 
-  const chartData = [...regularChartData, ...flashChartData].sort((a, b) => a.time - b.time);
+  const chartData = [...regularChartData, ...flashPoints].sort((a, b) => a.time - b.time);
 
   // Stats
   const totalBids = bids.length + flashBids.length;
@@ -290,17 +309,22 @@ export default function AuctionDetailPanel({ ticketId, reservePrice, buyItNowPri
                 connectNulls={false}
               />
               <Area
-                type="stepAfter"
-                dataKey="flash_amount"
+                type="linear"
+                dataKey="flash_line"
                 stroke="var(--amber)"
-                strokeWidth={0}
+                strokeWidth={2}
+                strokeDasharray="4 3"
                 fill="none"
                 dot={(props: any) => {
                   const { cx, cy, payload } = props;
-                  if (cx == null || cy == null || payload.flash_amount == null) return <g />;
+                  if (cx == null || cy == null || payload.flash_line == null) return <g />;
+                  // Only show dot on the actual flash bid point, not the connection point
+                  if (payload.flash_line === highestRegularBid && !payload.isFlash) return <g />;
+                  const isConnectionPoint = Math.abs(payload.flash_line - highestRegularBid) < 0.01;
+                  if (isConnectionPoint) return <g />;
                   return (
                     <g key={`flash-${cx}-${cy}`}>
-                      <circle cx={cx} cy={cy} r={6} fill="var(--amber)" opacity={0.25} />
+                      <circle cx={cx} cy={cy} r={7} fill="var(--amber)" opacity={0.2} />
                       <circle cx={cx} cy={cy} r={4} fill="var(--amber)" stroke="var(--bg-secondary)" strokeWidth={2} />
                     </g>
                   );

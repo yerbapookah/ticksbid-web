@@ -37,6 +37,7 @@ export interface Venue {
   venue_type: string;
   max_capacity: number;
   layout_type?: string | null;
+  layout_json?: string | null;
 }
 
 export interface Ticket {
@@ -206,7 +207,7 @@ export async function getEvent(id: string): Promise<Event> {
   try {
     const { rows } = await sql`
       SELECT e.id, e.name, e.event_type, e.venue_id, e.start_time, e.thumbnail_url, e.event_url,
-             v.name as venue_name, v.address as venue_address, v.venue_type, v.max_capacity, v.layout_type
+             v.name as venue_name, v.address as venue_address, v.venue_type, v.max_capacity, v.layout_type, v.layout_json
       FROM event e
       LEFT JOIN venue v ON e.venue_id = v.id
       WHERE e.id = ${id}::uuid
@@ -238,6 +239,7 @@ export async function getEvent(id: string): Promise<Event> {
           venue_type: r.venue_type || '',
           max_capacity: r.max_capacity || 0,
           layout_type: r.layout_type || null,
+          layout_json: r.layout_json || null,
         },
         tickets,
       };

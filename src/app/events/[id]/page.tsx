@@ -111,7 +111,7 @@ export default async function EventDetailPage({
           </div>
 
           {hasTickets ? (
-            <EventTicketsView tickets={ticketsWithAuctions} eventName={event.name} venueName={event.venue?.name} eventType={event.event_type} layoutType={event.venue?.layout_type} />
+            <EventTicketsView tickets={ticketsWithAuctions} eventName={event.name} venueName={event.venue?.name} eventType={event.event_type} layoutType={event.venue?.layout_type} layoutJson={event.venue?.layout_json} />
           ) : (
             <div className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--bg-secondary)] p-12 text-center">
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-[var(--bg-card)]">

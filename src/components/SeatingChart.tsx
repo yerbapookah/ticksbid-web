@@ -17,10 +17,23 @@ interface SeatingChartProps {
   onSeatClick: (ticketId: string | null) => void;
   eventType?: string;
   layoutType?: VenueType | null;
+  layoutJson?: string | null;
 }
 
-export default function SeatingChart({ venueName, seats, selectedTicketId, onSeatClick, eventType, layoutType }: SeatingChartProps) {
-  const layout: VenueLayout = getVenueLayout(venueName, eventType, layoutType);
+function parseLayoutJson(json: string | null | undefined): VenueLayout | null {
+  if (!json) return null;
+  try {
+    const parsed = JSON.parse(json);
+    if (parsed && parsed.sections && parsed.sections.length > 0 && parsed.courtOrStage) {
+      return parsed as VenueLayout;
+    }
+  } catch { /* invalid JSON */ }
+  return null;
+}
+
+export default function SeatingChart({ venueName, seats, selectedTicketId, onSeatClick, eventType, layoutType, layoutJson }: SeatingChartProps) {
+  // Priority: stored layout_json (Claude-generated) > auto-classified template
+  const layout: VenueLayout = parseLayoutJson(layoutJson) || getVenueLayout(venueName, eventType, layoutType);
 
   const sectionTickets: Record<string, SeatInfo[]> = {};
   for (const s of seats) {

@@ -210,8 +210,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
             </h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">{events.length} event{events.length !== 1 ? "s" : ""} found</p>
           </div>
-          <div className="flex items-center gap-3 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
-            <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-3 pb-1 sm:pb-0">
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
               {["All", "Concert", "Sports", "Theater", "Comedy", "Festival"].map((t) => {
                 const val = t === "All" ? "" : t.toLowerCase();
                 const active = eventType === val;

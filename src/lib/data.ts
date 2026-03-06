@@ -111,7 +111,14 @@ export async function searchEvents(
     `;
     const conditions: string[] = [];
     if (query) conditions.push(`e.name ILIKE '%${query.replace(/'/g, "''")}%'`);
-    if (eventType) conditions.push(`e.event_type = '${eventType.replace(/'/g, "''")}' `);
+    if (eventType) {
+      const types = eventType.split(',').filter(Boolean).map(t => `'${t.replace(/'/g, "''")}'`);
+      if (types.length === 1) {
+        conditions.push(`e.event_type = ${types[0]}`);
+      } else if (types.length > 1) {
+        conditions.push(`e.event_type IN (${types.join(',')})`);
+      }
+    }
     // Only show future events
     conditions.push(`(e.start_time IS NULL OR e.start_time > NOW() - INTERVAL '1 day')`);
     if (conditions.length > 0) neonQuery += ` WHERE ${conditions.join(' AND ')}`;

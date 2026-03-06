@@ -167,7 +167,8 @@ const SORT_OPTIONS = [
 export default async function Home({ searchParams }: { searchParams: Promise<{ q?: string; type?: string; sort?: string }> }) {
   const params = await searchParams;
   const query = params.q || "";
-  const eventType = params.type || "";
+  const eventType = params.type || ""; // comma-separated for multi-select
+  const selectedTypes = eventType ? eventType.split(",").filter(Boolean) : [];
   const sort = params.sort || "";
 
   let events: EventSummary[] = [];
@@ -175,7 +176,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
   let error = "";
 
   try {
-    events = await searchEvents(query || undefined, eventType || undefined, 40);
+    events = await searchEvents(query || undefined, eventType || undefined, 60);
 
     // Apply sorting
     if (sort === "date_desc") {
@@ -214,9 +215,19 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
               {["All", "Concert", "Sports", "Theater", "Comedy", "Festival"].map((t) => {
                 const val = t === "All" ? "" : t.toLowerCase();
-                const active = eventType === val;
+                const active = val === "" ? selectedTypes.length === 0 : selectedTypes.includes(val);
+                // Toggle logic: clicking "All" clears, clicking a type toggles it
+                let newTypes: string[];
+                if (val === "") {
+                  newTypes = [];
+                } else if (selectedTypes.includes(val)) {
+                  newTypes = selectedTypes.filter(v => v !== val);
+                } else {
+                  newTypes = [...selectedTypes, val];
+                }
+                const typeParam = newTypes.join(",");
                 return (
-                  <Link key={t} scroll={false} href={`/?${new URLSearchParams({ ...(query ? { q: query } : {}), ...(val ? { type: val } : {}), ...(sort ? { sort } : {}) }).toString()}`}
+                  <Link key={t} scroll={false} href={`/?${new URLSearchParams({ ...(query ? { q: query } : {}), ...(typeParam ? { type: typeParam } : {}), ...(sort ? { sort } : {}) }).toString()}`}
                     className={`flex-shrink-0 rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all ${active ? "bg-[var(--accent)] text-white" : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--border-hover)] hover:text-[var(--text-primary)]"}`}>
                     {t}
                   </Link>

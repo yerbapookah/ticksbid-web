@@ -1,4 +1,4 @@
-import { searchEvents, getTicketCountsByEvent, type EventSummary } from "@/lib/data";
+import { searchEventsWithTicketCounts, type EventSummary } from "@/lib/data";
 import Link from "next/link";
 import FavoriteButton from "@/components/FavoriteButton";
 import SortDropdown from "@/components/SortDropdown";
@@ -178,7 +178,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
   let error = "";
 
   try {
-    events = await searchEvents(query || undefined, eventType || undefined, 60);
+    const result = await searchEventsWithTicketCounts(query || undefined, eventType || undefined, 60);
+    events = result.events;
+    ticketCounts = result.ticketCounts;
 
     // Apply sorting
     if (sort === "date_desc") {
@@ -194,12 +196,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
   } catch (e) {
     error = "Failed to load events. Please try again.";
     console.error(e);
-  }
-
-  try {
-    ticketCounts = await getTicketCountsByEvent();
-  } catch (e) {
-    console.error("Failed to fetch ticket counts:", e);
   }
 
   return (

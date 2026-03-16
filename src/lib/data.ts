@@ -100,6 +100,59 @@ export interface AuctionDetail {
 // ---------------------------------------------------------------------------
 // Events
 // ---------------------------------------------------------------------------
+
+/**
+ * Primary data fetch for the home page.
+ * Calls the backend API once, returns events + ticket counts derived from
+ * the nested tickets[] in each event — no separate Neon query needed.
+ */
+export async function searchEventsWithTicketCounts(
+  query?: string,
+  eventType?: string,
+  limit = 20
+): Promise<{ events: EventSummary[]; ticketCounts: Record<string, number> }> {
+  try {
+    const params: Record<string, string> = { limit: String(limit) };
+    if (query) params.q = query;
+    if (eventType) params.event_type = eventType;
+
+    const raw = await apiGet<Array<{
+      id: string;
+      name: string;
+      event_type: string;
+      venue_id?: string;
+      venue?: { id: string };
+      start_time: string;
+      thumbnail_url?: string;
+      tickets?: { id: string }[];
+    }>>("/events", params);
+
+    const events: EventSummary[] = raw.map((e) => ({
+      id: e.id,
+      name: e.name,
+      event_type: e.event_type || "concert",
+      venue_id: e.venue_id ?? e.venue?.id ?? "",
+      start_time: e.start_time,
+      thumbnail_url: e.thumbnail_url,
+    }));
+
+    const ticketCounts: Record<string, number> = {};
+    for (const e of raw) {
+      if (e.tickets) ticketCounts[e.id] = e.tickets.length;
+    }
+
+    return { events: events.slice(0, limit), ticketCounts };
+  } catch (err) {
+    console.error("Backend API searchEventsWithTicketCounts error:", err);
+    // Fall back to Neon-based functions
+    const [events, ticketCounts] = await Promise.all([
+      searchEvents(query, eventType, limit),
+      getTicketCountsByEvent(),
+    ]);
+    return { events, ticketCounts };
+  }
+}
+
 export async function searchEvents(
   query?: string,
   eventType?: string,

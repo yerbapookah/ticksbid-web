@@ -4,6 +4,7 @@ import { useState } from "react";
 import { getMinBid, getMinIncrement } from "@/lib/bidding";
 import Countdown from "@/components/AuctionCountdown";
 import AuctionDetailPanel from "@/components/AuctionDetailPanel";
+import { useHighestBid } from "@/hooks/useAuctionSocket";
 
 interface AuctionTicketCardProps {
   ticketId: string;
@@ -54,7 +55,9 @@ export default function AuctionTicketCard({
   const [bidInput, setBidInput] = useState("");
   const [bidError, setBidError] = useState("");
   const [bidSuccess, setBidSuccess] = useState("");
-  const [liveBid, setLiveBid] = useState(currentBid ?? 0);
+  const [localBid, setLocalBid] = useState(currentBid ?? 0);
+  const { bidAmount: socketBid } = useHighestBid(auctionId, currentBid);
+  const liveBid = socketBid ?? localBid;
   const [expanded, setExpanded] = useState(false);
 
   // Flash bid state
@@ -133,7 +136,7 @@ export default function AuctionTicketCard({
       if (!res.ok) {
         setBidError(data.error || "Failed to place bid");
       } else {
-        setLiveBid(data.bid.bid_amount);
+        setLocalBid(data.bid.bid_amount);
         setBidInput("");
         setBidSuccess("Bid placed!");
         setChartRefreshKey(k => k + 1);

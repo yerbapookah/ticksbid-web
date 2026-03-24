@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:is(.dark *));
 
 @font-face {
   font-family: 'Geist';
@@ -21,21 +22,44 @@
   font-weight: 700;
 }
 
+/* ── TicksBid theme — base color: #8F9491 (muted sage/gray-green)
+   Light mode default (:root). Dark mode via .dark class on <html>.
+── */
+
+/* —— LIGHT (default) —— */
 :root {
-  --bg-primary: #06060a;
-  --bg-secondary: #0c0c14;
-  --bg-card: #10101c;
-  --bg-card-hover: #16162a;
-  --border: #1a1a30;
-  --border-hover: #2a2a50;
-  --text-primary: #f0f0f8;
-  --text-secondary: #8080a0;
-  --text-muted: #505068;
-  --accent: #6366f1;
-  --accent-hover: #818cf8;
-  --green: #10b981;
-  --amber: #f59e0b;
-  --red: #ef4444;
+  --bg-primary:    #f4f6f5;
+  --bg-secondary:  #e8edeb;
+  --bg-card:       #ffffff;
+  --bg-card-hover: #f0f4f2;
+  --border:        #d4dbd8;
+  --border-hover:  #8f9491;
+  --text-primary:  #1a2120;
+  --text-secondary:#4a5754;
+  --text-muted:    #8f9491;
+  --accent:        #5a7068;
+  --accent-hover:  #3d4f49;
+  --green:         #0d9668;
+  --amber:         #d97706;
+  --red:           #dc2626;
+}
+
+/* —— DARK —— */
+.dark {
+  --bg-primary:    #08090a;
+  --bg-secondary:  #0e1210;
+  --bg-card:       #131815;
+  --bg-card-hover: #1a2019;
+  --border:        #1f2922;
+  --border-hover:  #3a4840;
+  --text-primary:  #eef2f0;
+  --text-secondary:#8f9491;
+  --text-muted:    #5e6b64;
+  --accent:        #8f9491;
+  --accent-hover:  #aab5b0;
+  --green:         #10b981;
+  --amber:         #f59e0b;
+  --red:           #ef4444;
 }
 
 body {

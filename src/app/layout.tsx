@@ -4,6 +4,8 @@ import { AuthProvider } from "@/lib/auth";
 import { FavoritesProvider } from "@/context/FavoritesContext";
 import HeaderAuth from "@/components/HeaderAuth";
 import MobileMenu from "@/components/MobileMenu";
+import ThemeToggle from "@/components/ThemeToggle";
+import SocketProvider from "@/components/SocketProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,20 +20,11 @@ export const viewport: Viewport = {
 };
 
 function Logo({ size = 32 }: { size?: number }) {
-  const id = `lg-${size}`;
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id={id} x1="0" y1="0" x2="40" y2="44" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#a5b4fc" />
-          <stop offset="50%" stopColor="#818cf8" />
-          <stop offset="100%" stopColor="#6366f1" />
-        </linearGradient>
-      </defs>
-      {/* Ticket shape — rounded rect with semicircle notches */}
       <path
         d="M4 8a4 4 0 014-4h20a4 4 0 014 4v8.27a4 4 0 00-2.5 3.73 4 4 0 002.5 3.73V32a4 4 0 01-4 4H8a4 4 0 01-4-4V23.73A4 4 0 006.5 20 4 4 0 004 16.27V8z"
-        fill={`url(#${id})`}
+        fill="#5a7068"
       />
       {/* Dashed perforation line between notches */}
       <line x1="8" y1="20" x2="32" y2="20" stroke="white" strokeOpacity="0.2" strokeWidth="1" strokeDasharray="2 2.5" />
@@ -74,7 +67,7 @@ function Header() {
         {/* Right: nav + auth + mobile menu */}
         <div className="flex items-center gap-1 flex-shrink-0">
           <nav className="hidden items-center md:flex">
-            <Link href="/chat" className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-purple-400 transition-colors hover:text-purple-300 hover:bg-purple-500/10">
+            <Link href="/chat" className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-[var(--accent)] transition-colors hover:text-[var(--accent-hover)] hover:bg-[var(--accent)]/10">
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>
               TicksBid AI
             </Link>
@@ -95,6 +88,7 @@ function Header() {
           <div className="hidden md:block">
             <HeaderAuth />
           </div>
+          <ThemeToggle />
           <MobileMenu />
         </div>
       </div>
@@ -165,8 +159,9 @@ function Footer() {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})()` }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
@@ -174,6 +169,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <AuthProvider>
           <FavoritesProvider>
+            <SocketProvider />
             <Header />
             <main className="min-h-screen">{children}</main>
             <Footer />
